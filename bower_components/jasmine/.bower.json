@@ -1,0 +1,15 @@
+{
+  "name": "jasmine",
+  "homepage": "https://github.com/pivotal/jasmine",
+  "version": "2.0.1",
+  "_release": "2.0.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "v2.0.1",
+    "commit": "77c84a860c90d88bd13540a6b8794ee34bde44e5"
+  },
+  "_source": "git://github.com/pivotal/jasmine.git",
+  "_target": "~2.0.1",
+  "_originalSource": "jasmine",
+  "_direct": true
+}

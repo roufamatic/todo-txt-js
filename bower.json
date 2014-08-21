@@ -1,0 +1,27 @@
+{
+  "name": "todo-txt-js",
+  "version": "0.1.0",
+  "authors": [
+    "Michael Roufa <mike@roufa.com>"
+  ],
+  "description": "A todo.txt parser implemented in JavaScript.",
+  "main": "todotxt.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "todo.txt",
+    "javascript"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "jasmine": "~2.0.1"
+  }
+}
