@@ -14,15 +14,15 @@ Parsing
 // Let's create a todo list.
 var todoList = '+music Write a new song @guitar @home\n' + 
   '(B) 2014-04-10 ride 25 miles @bicycle +stayhealthy\n' + 
-  '\n' +                                                    // NOTE: empty lines are ignored by the parser.
+  '\n' +     // NOTE: empty lines are ignored by the parser.
   'x 2014-03-02 buy milk @grocerystore\n' + 
   '(A) FILE TAXES! due:2014-04-15 for:me for:wife';
 
 // Read the list into an array of todo items.
-var items = TodoTxt.parseFile('Task1\n@work Task2\n(A) 2014-01-01 prioritized Task3 +someproject');
+var items = TodoTxt.parseFile(todoList);
 
 // Access properties on the new items.
-console.log(items.length); // ==> 4
+console.log(items.length);            // ==> 4
 
 console.log(items[0].text);           // ==> 'Write a new song'
 console.log(items[0].contexts);       // ==> ['@guitar', '@home']
@@ -75,13 +75,15 @@ Individual items can be rendered back into strings, as can the entire list. Howe
 
 
 ```
-var item = TodoTxt.parseLine();       // an empty parseLine acts like a constructor and gives you a blank object.
+// an empty parseLine acts like a constructor and gives you a blank object.
+var item = TodoTxt.parseLine();       
 item.priority = 'X';
 item.createdDate = new Date();
 item.text = 'Dance!';
 item.contexts.push('@work');
 item.projects.push('+confuseMyCoworkers');
-console.log(item.render());           // ==> (X) 2014-08-21 Dance! +confuseMyCoworkers @work
+console.log(item.render());           
+// ==> (X) 2014-08-21 Dance! +confuseMyCoworkers @work
 
 var list = TodoTxt.parseFile('(A) @work +dinosaur Open the door\n' +
   '(B) @work +dinosaur Get on the floor\n' +
