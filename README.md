@@ -33,7 +33,7 @@ console.log(items[0].complete);       // ==> false
 console.log(items[0].completedDate);  // ==> null
 console.log(items[0].addons);         // ==> {}
 
-console.log(items[1].text);           // ==> 'ride 25 milds'
+console.log(items[1].text);           // ==> 'ride 25 miles'
 console.log(items[1].contexts);       // ==> ['@bicycle']
 console.log(items[1].projects);       // ==> ['+stayhealthy']
 console.log(items[1].priority);       // ==> B
