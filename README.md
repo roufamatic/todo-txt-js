@@ -75,11 +75,9 @@ properties of a todo item. The values of those properties may be:
 
 * Simple values (string, date, boolean) for exact matching (e.g. `{ isCompleted: false }`)
 * Arrays, for "contains" matching of array properties like contexts, projects, and textTokens. The values are treated as an AND search, so every value specified must be present in every item.
-* * For example, `{ contexts: ['@home', '@work'] }` will only match items that have BOTH *@home* and *@work* in them.
+  * For example, `{ contexts: ['@home', '@work'] }` will only match items that have BOTH *@home* and *@work* in them.
 * Functions, for custom comparison logic. The function will take one argument, which is the value of the property on each item. Return `true` if the item passes the custom test, `false` otherwise.
-* * Example (with Underscore.js): `{contexts: function(contexts) { return _.contains(contexts, '@home') || _.contains(contexts, '@work'); }}` will match items that have EITHER *@home* OR *@work* contexts.
-
-```
+  * Example (with Underscore.js): `{contexts: function(contexts) { return _.contains(contexts, '@home') || _.contains(contexts, '@work'); }}` will match items that have EITHER *@home* OR *@work* contexts.
 
 
 Rendering
