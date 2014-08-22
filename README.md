@@ -111,17 +111,8 @@ are functions; this keeps the task largely immutable so rendering can return the
 of tokens. When a list object is rendered, blank lines will be removed but the order of all tasks will be preserved.
 
 ```
-// an empty parseLine acts like a constructor and gives you a blank object.
-var item = TodoTxt.parseLine();       
-item.priority = 'X';
-item.createdDate = new Date();
-item.text = 'Dance!';
-item.contexts.push('@work');
-item.projects.push('+confuseMyCoworkers');
-console.log(item.render());           
-// ==> (X) 2014-08-21 Dance! +confuseMyCoworkers @work
-
 var list = TodoTxt.parseFile('(A) @work +dinosaur Open the door\n' +
+  '\n' +
   '(B) @work +dinosaur Get on the floor\n' +
   '(C) @work +dinosaur Everybody walk the dinosaur');
 
