@@ -178,7 +178,7 @@ var TodoTxt = (function(){
 	
 	var renderLine = function(todo) {
 		var output = '';
-		if (todo.complete) {
+		if (todo.isComplete) {
 			output += 'x';
 			if (todo.completedDate) output += ' ' + toIsoDate(todo.completedDate);
 		}

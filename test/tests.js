@@ -92,7 +92,7 @@ describe('The todo.txt parseLine function', function() {
 		var todo = TodoTxt.parseLine();
 		todo.createdDate = new Date('2014/03/01');
 		todo.priority = 'A';
-		todo.complete = true;
+		todo.isComplete = true;
 		todo.completedDate = new Date('2014/03/02');
 		todo.contexts = ['@computer','@office'];
 		todo.projects = ['+todotxt','+fun'];
