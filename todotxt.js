@@ -46,9 +46,9 @@ var TodoTxt = (function(){
 	var isItemInQuery = function(item, query) {
 		for (var k in query) {
 			if (!query.hasOwnProperty(k)) continue;
-			if (!item.hasOwnProperty(k) || typeof item[k] === 'function') throw new Error('This property is invalid for query: ' + k);
+			if (!item.hasOwnProperty(k)) throw new Error('This property is invalid for query: ' + k);
 			var queryProp = query[k];
-			var itemProp = item[k];
+			var itemProp = item[k]();
 			var queryPropType = 'direct';
 			if (typeof queryProp === 'function') queryPropType = 'function';
 			else if (isArray(queryProp)) queryPropType = 'containsAll';
@@ -88,8 +88,7 @@ var TodoTxt = (function(){
 	};
 	
 	var parseLine = function(line) {
-		var output = {
-			orig: line,
+		var parseValues = {
 			priority: null,
 			createdDate: null,
 			isComplete: false,
@@ -97,21 +96,20 @@ var TodoTxt = (function(){
 			contexts: [],
 			projects: [],
 			addons: {},
-			textTokens: [],
-			text: function() { return this.textTokens.join(' '); },
-			render: function() { return renderLine(this); }
+			textTokens: []
 		};
+		
 		
 		// Note: this is slightly different behavior than parseFile.
 		// parseFile removes blank lines before sending them into this function.
 		// However, if parseLine is called directly with blank input, it will return an empty todo item.
 		// In other words, "parseLine()" functions like a line constructor.
 		
-		if (!line || reBlankLine.test(line)) return output;
+		if (!line || reBlankLine.test(line)) return parseValues;
 		
 		// Trim the line.
 		line = line.replace(reTrim, '');
-		if (line === '') return output;
+		if (line === '') return parseValues;
 		
 		// Split it into tokens.
 		var tokens = line.split(reSplitSpaces);
@@ -146,7 +144,7 @@ var TodoTxt = (function(){
 		
 		var tokenParser = function(token) {
 			if (canBeComplete && token === 'x') {
-				output.isComplete = true;
+				parseValues.isComplete = true;
 				// The next token cannot be isComplete.
 				canBeComplete = false;
 				// The next token can be completed date.
@@ -157,14 +155,14 @@ var TodoTxt = (function(){
 			if (canBeCompletedDate) {
 				var dt = tokenToDate(token);
 				if (_.isDate(dt)) {
-					output.completedDate = dt;
+					parseValues.completedDate = dt;
 					canBeCompletedDate = false;
 					return;
 				}
 			}
 			
 			if (canBePriority && rePriority.test(token)) {
-				output.priority = token[1];
+				parseValues.priority = token[1];
 				canBeComplete = false;
 				canBeCompletedDate = false;
 				canBePriority = false;
@@ -174,7 +172,7 @@ var TodoTxt = (function(){
 			if (canBeCreatedDate) {
 				var dt = tokenToDate(token);
 				if (_.isDate(dt)) {
-					output.createdDate = dt;
+					parseValues.createdDate = dt;
 					canBeComplete = false;
 					canBeCompletedDate = false;
 					canBePriority = false;
@@ -185,11 +183,11 @@ var TodoTxt = (function(){
 			
 			if (token.length > 1 && token[0] === '@') {
 				// It's a context!
-				output.contexts.push(token);
+				parseValues.contexts.push(token);
 			}
 			else if (token.length > 1 && token[0] === '+') {
 				// It's a project!
-				output.projects.push(token);
+				parseValues.projects.push(token);
 			}
 			else if (token.length > 2 && token.indexOf(':') > 0 && token.indexOf(':') < (token.length - 1)) {
 				// It's an add-on!
@@ -197,18 +195,18 @@ var TodoTxt = (function(){
 				var tail = bits.splice(1);
 				var key = bits[0];
 				var val = tail.join(':'); // Colons beyond the first are just part of the value.
-				if (!output.addons[key]) output.addons[key] = val;
-				else if (!isArray(output.addons[key])) {
-					var oldValue = output.addons[key];
-					output.addons[key] = [oldValue, val];
+				if (!parseValues.addons[key]) parseValues.addons[key] = val;
+				else if (!isArray(parseValues.addons[key])) {
+					var oldValue = parseValues.addons[key];
+					parseValues.addons[key] = [oldValue, val];
 				}
 				else {
-					output.addons[key].push(val);
+					parseValues.addons[key].push(val);
 				}
 			}
 			else {
 				// It's just good old text.
-				output.textTokens.push(token);
+				parseValues.textTokens.push(token);
 			}
 			
 			canBePriority = false;
@@ -221,17 +219,45 @@ var TodoTxt = (function(){
 			tokenParser(tokens[i]);
 		}
 		
+		// Return functions to keep the todo immutable.
+		var output = {
+			priority: function() { return parseValues.priority; },
+			createdDate: function() { return parseValues.createdDate; },
+			isComplete: function() { return parseValues.isComplete; },
+			completedDate: function() { return parseValues.completedDate; },
+			contexts: function() { return parseValues.contexts; },
+			projects: function() { return parseValues.projects; },
+			addons: function() { return parseValues.addons; },
+			textTokens: function() { return parseValues.textTokens; },
+			render: function() { return line; },
+			completeTask: function() { 
+				if (parseValues.isComplete) return;
+				parseValues.isComplete = true;
+				parseValues.completedDate = new Date();
+				line = 'x ' + toIsoDate(parseValues.completedDate) + ' ' + line;
+			},
+			uncompleteTask: function() {
+				if (!parseValues.isComplete) return;
+				parseValues.isComplete = false;
+				var hadCompletedDate = (parseValues.completedDate !== null);
+				parseValues.completedDate = null;
+				
+				line = line.split(' ').splice(hadCompletedDate ? 2 : 1).join(' ');
+			}
+		};
+		
 		return output;
 	};
 	
 	var toIsoDate = function(dt) {
+		var zeropad = function(num, len) { 
+			var output = num.toString();
+			while (output.length < len) output = '0' + output;
+			return output;
+		}
 		return dt.getFullYear() + '-' + zeropad(dt.getMonth() + 1, 2) + '-' + zeropad(dt.getDate(), 2);
 	};
-	var zeropad = function(num, len) { 
-		var output = num.toString();
-		while (output.length < len) output = '0' + output;
-		return output;
-	}
+
 	var isArray = function(arg) {
 		return Object.prototype.toString.call(arg) === '[object Array]'
 	};

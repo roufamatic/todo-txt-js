@@ -7,8 +7,32 @@ About
 This is a [todo.txt](https://github.com/ginatrapani/todo.txt-cli/wiki/The-Todo.txt-Format) parser written in pure JavaScript.
 The source has no dependencies, though there are a few for the unit tests.
 
+Usage
+-----
+`TodoTxt.parseFile(str)` treats a string as though it is a file containing many todo items separated by line breaks. It returns 
+a specialized object with these properties:
+
+* `.length` returns the number of items found in the list. Blank lines are ignored.
+* `.items(query)` returns an array of task objects, optionally filtered by a query (see below).
+* `.render()` converts the object back into a todo list. It may not look the same as the original (see below).
+
+`TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
+* `isComplete()` : whether the task has been completed. Boolean, never null.
+* `completedDate()` : The date of completion, if present. Date, may be null.
+* `priority()` : The current priority. Single character between A-Z, may be null.
+* `createdDate()` : The date the task was created, if present. Date, may be null.
+* `contexts()` : A list of all the contexts (@home, @work, etc) in the task. Array of string, never null, may be empty.
+* `projects()` : A list of all the projects (+health, +jobsearch, etc) in the task. Array of string, never null, may be empty.
+* `addons()` : A list of all addons found within the project. Array of object, never null, may be empty. See "Add-Ons" below.
+* `textTokens()` : A list of all words in the task that have not been categorized as anything else. Array of string, never null, may be empty (but what's the point of that?).
+* `completeTask()` : marks the task completed and sets the completedDate to now.
+* `uncompleteTask()` : marks the task incomplete and sets the completedDate to null.
+* `render()` : Converts the object back into a string. 
+
+
 Parsing
 -------
+Both 'files' (tasks separated by line breaks) and 'lines' (individual tasks) can be parsed.
 
 ```
 // Let's create a todo list.
@@ -27,44 +51,43 @@ console.log(todos.length);            // ==> 4
 // Fetch items from the object
 var items = todos.items();            
 
-console.log(items[0].text());           // ==> 'Write a new song'
-console.log(items[0].contexts);       // ==> ['@guitar', '@home']
-console.log(items[0].projects);       // ==> ['+music']
-console.log(items[0].priority);       // ==> null
-console.log(items[0].createdDate);    // ==> null
-console.log(items[0].complete);       // ==> false
-console.log(items[0].completedDate);  // ==> null
-console.log(items[0].addons);         // ==> {}
+console.log(items[0].contexts());       // ==> ['@guitar', '@home']
+console.log(items[0].projects());       // ==> ['+music']
+console.log(items[0].priority());       // ==> null
+console.log(items[0].createdDate());    // ==> null
+console.log(items[0].isComplete());     // ==> false
+console.log(items[0].completedDate());  // ==> null
+console.log(items[0].addons());         // ==> {}
+console.log(items[0].textTokens());     // ==> ['Write', 'a', 'new', 'song']
 
-console.log(items[1].text());           // ==> 'ride 25 miles'
-console.log(items[1].contexts);       // ==> ['@bicycle']
-console.log(items[1].projects);       // ==> ['+stayhealthy']
-console.log(items[1].priority);       // ==> B
-console.log(items[1].createdDate);    // ==> Date object (April 10, 2014)
-console.log(items[1].complete);       // ==> false
-console.log(items[1].completedDate);  // ==> null
-console.log(items[1].addons);         // ==> {}
+console.log(items[1].contexts());       // ==> ['@bicycle']
+console.log(items[1].projects());       // ==> ['+stayhealthy']
+console.log(items[1].priority());       // ==> B
+console.log(items[1].createdDate());    // ==> Date object (April 10, 2014)
+console.log(items[1].isComplete());     // ==> false
+console.log(items[1].completedDate());  // ==> null
+console.log(items[1].addons());         // ==> {}
 
-console.log(items[2].text());           // ==> 'Buy milk'
-console.log(items[2].contexts);       // ==> ['@grocerystore']
-console.log(items[2].projects);       // ==> []
-console.log(items[2].priority);       // ==> null
-console.log(items[2].createdDate);    // ==> null
-console.log(items[2].complete);       // ==> true
-console.log(items[2].completedDate);  // ==> Date object (March 2, 2014)
-console.log(items[2].addons);         // ==> {}
+console.log(items[2].contexts());       // ==> ['@grocerystore']
+console.log(items[2].projects());       // ==> []
+console.log(items[2].priority());       // ==> null
+console.log(items[2].createdDate());    // ==> null
+console.log(items[2].isComplete());     // ==> true
+console.log(items[2].completedDate());  // ==> Date object (March 2, 2014)
+console.log(items[2].addons());         // ==> {}
 
-console.log(items[3].text);           // ==> 'FILE TAXES!'
-console.log(items[3].contexts);       // ==> []
-console.log(items[3].projects);       // ==> []
-console.log(items[3].priority);       // ==> 'A'
-console.log(items[3].createdDate);    // ==> null
-console.log(items[3].complete);       // ==> false
-console.log(items[3].completedDate);  // ==> null
-console.log(items[3].addons);         // ==> {due: '2014-04-15', for: ['me','wife']} 
+console.log(items[3].contexts());       // ==> []
+console.log(items[3].projects());       // ==> []
+console.log(items[3].priority());       // ==> 'A'
+console.log(items[3].createdDate());    // ==> null
+console.log(items[3].isComplete());     // ==> false
+console.log(items[3].completedDate());  // ==> null
+console.log(items[3].addons());         // ==> {due: '2014-04-15', for: ['me','wife']} 
 ```
 
-As you can see, add-ons are given a bit of special treatment. If an add-on key (the portion preceding the colon) appears 
+Add-Ons
+-------
+As you can see above, add-ons are given a bit of special treatment. If an add-on key (the portion preceding the colon) appears 
 only once in the item, the value is treated as a simple string. However, if the key appears more than once, 
 then the parsed value will be an array containing each of the values in the string. Hence "for:me for:wife" becomes `{ for: ['me','wife'] }`.
 
@@ -83,11 +106,9 @@ properties of a todo item. The values of those properties may be:
 Rendering
 ---------
 
-Individual items can be rendered back into strings, as can the entire list. However, be aware that:
-
-* The order of tokens in each item may be rearranged
-* In a document, blank lines will be removed, but otherwise the order of tasks will be preserved.
-
+Individual items can be rendered back into strings, as can the entire list. By now you've notice that the properties on each item
+are functions; this keeps the task largely immutable so rendering can return the original string without changing up the order
+of tokens. When a list object is rendered, blank lines will be removed but the order of all tasks will be preserved.
 
 ```
 // an empty parseLine acts like a constructor and gives you a blank object.
@@ -106,9 +127,9 @@ var list = TodoTxt.parseFile('(A) @work +dinosaur Open the door\n' +
 
 
 console.log(list.render());
-// (A) Open the door +dinosaur @work
-// (B) Get on the floor +dinosaur @work
-// (C) Everybody walk the dinosaur +dinosaur @work
+// (A) @work +dinosaur Open the door
+// (B) @work +dinosaur Get on the floor
+// (C) @work +dinosaur Everybody walk the dinosaur
 
 ```
 
