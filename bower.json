@@ -19,7 +19,8 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+	"karma.conf.js"
   ],
   "devDependencies": {
     "jasmine": "~2.0.1",
