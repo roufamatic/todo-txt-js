@@ -8,22 +8,83 @@ var TodoTxt = (function(){
 	
 	var parseFile = function(blob) {
 		var lines = blob.split('\n');
-		var output = [];
+		var items = [];
+		var output = {};
 		for (var i = 0; i < lines.length; i++) {
 			var line = lines[i];
 			if (reBlankLine.test(line)) continue;
-			output.push(parseLine(line));
+			items.push(parseLine(line));
 		}
 		output.render = function() {
 			var txt = '';
-			for (var i = 0; i < this.length; i++) {
+			for (var i = 0; i < items.length; i++) {
 				if (txt !== '') txt += '\n';
-				txt += this[i].render();
+				txt += items[i].render();
 			}
 			return txt;
 		};
+		output.items = function(query) {
+			// A query is an AND search -- all properties in that object must be found on the item for the item to match.
+			// Query property values may be functions. In this case, the property value for each item will be passed into the function,
+			// and the function should return a boolean indicating if the item matches or not. 
+			
+			var output = [];
+			if (!query) query = {};
+			for (var i = 0; i < items.length; i++) { 
+				var item = items[i];
+				if (isItemInQuery(item, query)) output.push(item);
+			}
+			
+			return output;
+		};
+		
+		output.length = items.length;
 		
 		return output;
+	};
+	
+	var isItemInQuery = function(item, query) {
+		for (var k in query) {
+			if (!query.hasOwnProperty(k)) continue;
+			if (!item.hasOwnProperty(k) || typeof item[k] === 'function') throw new Error('This property is invalid for query: ' + k);
+			var queryProp = query[k];
+			var itemProp = item[k];
+			var queryPropType = 'direct';
+			if (typeof queryProp === 'function') queryPropType = 'function';
+			else if (isArray(queryProp)) queryPropType = 'containsAll';
+			
+			switch (queryPropType) {
+				case 'function':
+					// Pass the property value into the function. If it returns false, go home. If true, move onto the next property.
+					if (!queryProp(itemProp)) return false;
+					break;
+				case 'containsAll':
+					// Make sure the source is an array as well. If not, throw.
+					if (!isArray(itemProp)) throw new Error('Cannot pass array for non-array property');
+					
+					// Make sure each and every item in the query is also in the item -- an AND search.
+					// (To do an OR search, use the function capability above and write your own comparer.)
+					for (var i = 0; i < queryProp.length; i++) {
+						var foundIt = false;
+						for (var j = 0; j < itemProp.length; j++) {
+							if (queryProp[i] === itemProp[j]) {
+								foundIt = true;
+								break;
+							}
+						}
+						if (!foundIt) return false;
+					}
+					break;
+				case 'direct':
+					if (queryProp !== itemProp) return false;
+					
+					break;
+				default:
+					throw new Error('unexpected queryPropType: ' + queryPropType);
+			}
+			
+		}
+		return true;
 	};
 	
 	var parseLine = function(line) {
@@ -36,11 +97,11 @@ var TodoTxt = (function(){
 			contexts: [],
 			projects: [],
 			addons: {},
-			text: '',
-			render: function() {
-				return renderLine(this);
-			}
+			textTokens: [],
+			text: function() { return this.textTokens.join(' '); },
+			render: function() { return renderLine(this); }
 		};
+		
 		// Note: this is slightly different behavior than parseFile.
 		// parseFile removes blank lines before sending them into this function.
 		// However, if parseLine is called directly with blank input, it will return an empty todo item.
@@ -147,8 +208,7 @@ var TodoTxt = (function(){
 			}
 			else {
 				// It's just good old text.
-				if (output.text !== '') output.text += ' ';
-				output.text += token;
+				output.textTokens.push(token);
 			}
 			
 			canBePriority = false;
@@ -184,7 +244,7 @@ var TodoTxt = (function(){
 		}
 		if (todo.priority) output += ' (' + todo.priority + ')';
 		if (todo.createdDate) output += ' ' + toIsoDate(todo.createdDate);
-		output += ' ' + todo.text;
+		output += ' ' + todo.textTokens.join(' ');
 		if (todo.projects.length > 0) output += ' ' + todo.projects.join(' ');
 		if (todo.contexts.length > 0) output += ' ' + todo.contexts.join(' ');
 		for (var k in todo.addons) {

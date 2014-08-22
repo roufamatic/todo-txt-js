@@ -1,17 +1,51 @@
 describe('The todo.txt parseFile function', function() {
-	it("generates an array from a blob of text", function() {
+	it("generates an object from a blob of text", function() {
 		var testFile = 'Task1\nTask2';
 		var output = TodoTxt.parseFile(testFile);
 		expect(output.length).toBe(2);
+		expect(output.items().length).toBe(2);
 	});
 	it("ignores blank lines", function() {
 		var testFile = '\nTask1\n   \n\t\nTask2\n \n';
 		var output = TodoTxt.parseFile(testFile);
 		expect(output.length).toBe(2);
+		expect(output.items().length).toBe(2);
 	});
 	it("renders todos as text", function() {
 		var testFile = 'Task1\nTask2';
 		expect(TodoTxt.parseFile(testFile).render()).toBe(testFile);
+	});
+	it("fetches items using a function", function() {
+		var testFile = 'Task1\nTask2';
+		expect(_.isArray(TodoTxt.parseFile(testFile).items())).toBeTruthy();
+	});
+	it("fetches items using a query", function() {
+		var testFile = '@ctxt1 @ctxt2 text1 +prj1 +prj2\n' + 
+			'(P) @ctxt1 text2\n' + 
+			'x @ctxt2 +prj1 text1 text3';
+	
+		var todos = TodoTxt.parseFile(testFile);
+		
+		var completed = todos.items({ isComplete: true });
+		expect(completed.length).toBe(1);
+		
+		var ctxt1 = todos.items({ contexts: ['@ctxt1'] });
+		expect(ctxt1.length).toBe(2);
+		
+		var ctxt1and2 = todos.items({contexts: ['@ctxt1','@ctxt2']});
+		expect(ctxt1and2.length).toBe(1);
+		
+		var ctxt1or2 = todos.items({contexts: function(contexts) { return _.contains(contexts, '@ctxt1') || _.contains(contexts, '@ctxt2'); }});
+		expect(ctxt1or2.length).toBe(3);
+		
+		var text1 = todos.items({textTokens:['text1']});
+		expect(text1.length).toBe(2);
+		
+		var hasPrio = todos.items({priority:function(priority) { return priority !== null; }});
+		expect(hasPrio.length).toBe(1);
+		
+		var multi = todos.items({ projects: ['+prj1'], contexts: ['@ctxt1', '@ctxt2']});
+		expect(multi.length).toBe(1)
 	});
 });
 
@@ -97,7 +131,7 @@ describe('The todo.txt parseLine function', function() {
 		todo.contexts = ['@computer','@office'];
 		todo.projects = ['+todotxt','+fun'];
 		todo.addons = { due: '2014-03-05', 'for': ['me','everybody'] };
-		todo.text = 'Finish todotxt.js!';
+		todo.textTokens = ['Finish','todotxt.js!'];
 		
 		expect(todo.render()).toBe('x 2014-03-02 (A) 2014-03-01 Finish todotxt.js! +todotxt +fun @computer @office due:2014-03-05 for:me for:everybody');
 	});
