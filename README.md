@@ -19,12 +19,15 @@ var todoList = '+music Write a new song @guitar @home\n' +
   '(A) FILE TAXES! due:2014-04-15 for:me for:wife';
 
 // Read the list into an array of todo items.
-var items = TodoTxt.parseFile(todoList);
+var todos = TodoTxt.parseFile(todoList);
 
 // Access properties on the new items.
-console.log(items.length);            // ==> 4
+console.log(todos.length);            // ==> 4
 
-console.log(items[0].text);           // ==> 'Write a new song'
+// Fetch items from the object
+var items = todos.items();            
+
+console.log(items[0].text());           // ==> 'Write a new song'
 console.log(items[0].contexts);       // ==> ['@guitar', '@home']
 console.log(items[0].projects);       // ==> ['+music']
 console.log(items[0].priority);       // ==> null
@@ -33,7 +36,7 @@ console.log(items[0].complete);       // ==> false
 console.log(items[0].completedDate);  // ==> null
 console.log(items[0].addons);         // ==> {}
 
-console.log(items[1].text);           // ==> 'ride 25 miles'
+console.log(items[1].text());           // ==> 'ride 25 miles'
 console.log(items[1].contexts);       // ==> ['@bicycle']
 console.log(items[1].projects);       // ==> ['+stayhealthy']
 console.log(items[1].priority);       // ==> B
@@ -42,7 +45,7 @@ console.log(items[1].complete);       // ==> false
 console.log(items[1].completedDate);  // ==> null
 console.log(items[1].addons);         // ==> {}
 
-console.log(items[2].text);           // ==> 'Buy milk'
+console.log(items[2].text());           // ==> 'Buy milk'
 console.log(items[2].contexts);       // ==> ['@grocerystore']
 console.log(items[2].projects);       // ==> []
 console.log(items[2].priority);       // ==> null
@@ -64,6 +67,20 @@ console.log(items[3].addons);         // ==> {due: '2014-04-15', for: ['me','wif
 As you can see, add-ons are given a bit of special treatment. If an add-on key (the portion preceding the colon) appears 
 only once in the item, the value is treated as a simple string. However, if the key appears more than once, 
 then the parsed value will be an array containing each of the values in the string. Hence "for:me for:wife" becomes `{ for: ['me','wife'] }`.
+
+Querying
+--------
+The todo list `items()` method can be passed a query object to filter the output. The query object contains a subset of the 
+properties of a todo item. The values of those properties may be:
+
+* Simple values (string, date, boolean) for exact matching (e.g. `{ isCompleted: false }`)
+* Arrays, for "contains" matching of array properties like contexts, projects, and textTokens. The values are treated as an AND search, so every value specified must be present in every item.
+* * For example, `{ contexts: ['@home', '@work'] }` will only match items that have BOTH *@home* and *@work* in them.
+* Functions, for custom comparison logic. The function will take one argument, which is the value of the property on each item. Return `true` if the item passes the custom test, `false` otherwise.
+* * Example (with Underscore.js): `{contexts: function(contexts) { return _.contains(contexts, '@home') || _.contains(contexts, '@work'); }}` will match items that have EITHER *@home* OR *@work* contexts.
+
+```
+
 
 Rendering
 ---------
