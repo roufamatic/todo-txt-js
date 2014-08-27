@@ -122,7 +122,6 @@ describe('TodoTxt.parseLine', function() {
 	});
 	
 	it("produces a reasonable render", function() {
-		// Sure would be nice if it could maintain order... oh well.
 		var line = 'x 2014-03-02 (A) 2014-03-01 Finish todotxt.js! +todotxt +fun @computer @office due:2014-03-05 for:me for:everybody';
 		var todo = TodoTxt.parseLine(line);
 		
