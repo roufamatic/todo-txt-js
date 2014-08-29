@@ -16,7 +16,7 @@ a specialized object with these properties:
 
 * `.length` returns the number of items found in the list. Blank lines are ignored.
 * `.items(query)` returns an array of task objects, optionally filtered by a query (see below).
-* `.render()` converts the object back into a todo list. It may not look the same as the original (see below).
+* `.render(query)` converts the object back into a todo list, optionally using a query (see below). It may not look the same as the original (see below).
 * `.removeItem(item)` removes an item from the list. 
 
 `TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
@@ -98,8 +98,7 @@ then the parsed value will be an array containing each of the values in the stri
 
 Querying
 --------
-The todo list `items()` method can be passed a query object to filter the output. The query object contains a subset of the 
-properties of a todo item. The values of those properties may be:
+The todo list `items()` and `render()` methods can be passed a query object to filter the output. The query object contains a subset of the properties of a todo item. The values of those properties may be:
 
 * Simple values (string, date, boolean) for exact matching (e.g. `{ isCompleted: false }`)
 * Arrays, for "contains" matching of array properties like contexts, projects, and textTokens. The values are treated as an AND search, so every value specified must be present in every item.

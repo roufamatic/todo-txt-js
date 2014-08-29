@@ -15,11 +15,13 @@ var TodoTxt = (function(){
 			if (reBlankLine.test(line)) continue;
 			items.push(parseLine(line));
 		}
-		output.render = function() {
-			var txt = '';
-			for (var i = 0; i < items.length; i++) {
+		output.render = function(query) {
+		    var itemsToRender = output.items(query);
+
+		    var txt = '';
+		    for (var i = 0; i < itemsToRender.length; i++) {
 				if (txt !== '') txt += '\n';
-				txt += items[i].render();
+				txt += itemsToRender[i].render();
 			}
 			return txt;
 		};

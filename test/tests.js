@@ -15,6 +15,10 @@ describe('TodoTxt.parseFile', function() {
 		var testFile = 'Task1\nTask2';
 		expect(TodoTxt.parseFile(testFile).render()).toBe(testFile);
 	});
+    it("renders todos using a query", function() {
+        var testFile = 'abc\ndef\nx nonono\nghi';
+        expect(TodoTxt.parseFile(testFile).render({ isComplete: false })).toBe('abc\ndef\nghi');
+    });
 	it("fetches items using a function", function() {
 		var testFile = 'Task1\nTask2';
 		expect(_.isArray(TodoTxt.parseFile(testFile).items())).toBeTruthy();
