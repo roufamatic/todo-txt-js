@@ -39,7 +39,12 @@ var TodoTxt = (function(){
 		};
 		
 		output.length = items.length;
-		
+
+	    output.removeItem = function(itemToRemove) {
+	        items = _.reject(items, function (item) { return itemToRemove.id() === item.id(); });
+	        output.length = items.length;
+	    };
+
 		return output;
 	};
 	
@@ -88,7 +93,11 @@ var TodoTxt = (function(){
 	};
 	
 	var parseLine = function(line) {
-		var parseValues = {
+	    var parseValues = {
+	        id: 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+	            return v.toString(16);
+	        }),
 			priority: null,
 			createdDate: null,
 			isComplete: false,
@@ -99,17 +108,46 @@ var TodoTxt = (function(){
 			textTokens: []
 		};
 		
+        parseValues.makePublic = function() {
+            return {
+                id: function () { return parseValues.id; },
+                priority: function () { return parseValues.priority; },
+                createdDate: function () { return parseValues.createdDate; },
+                isComplete: function () { return parseValues.isComplete; },
+                completedDate: function () { return parseValues.completedDate; },
+                contexts: function () { return parseValues.contexts; },
+                projects: function () { return parseValues.projects; },
+                addons: function () { return parseValues.addons; },
+                textTokens: function () { return parseValues.textTokens; },
+                render: function () { return line; },
+                completeTask: function () {
+                    if (parseValues.isComplete) return;
+                    parseValues.isComplete = true;
+                    parseValues.completedDate = new Date();
+                    line = 'x ' + toIsoDate(parseValues.completedDate) + ' ' + line;
+                },
+                uncompleteTask: function () {
+                    if (!parseValues.isComplete) return;
+                    parseValues.isComplete = false;
+                    var hadCompletedDate = (parseValues.completedDate !== null);
+                    parseValues.completedDate = null;
+
+                    line = line.split(' ').splice(hadCompletedDate ? 2 : 1).join(' ');
+                }
+            };
+        };
+
 		
 		// Note: this is slightly different behavior than parseFile.
 		// parseFile removes blank lines before sending them into this function.
 		// However, if parseLine is called directly with blank input, it will return an empty todo item.
 		// In other words, "parseLine()" functions like a line constructor.
 		
-		if (!line || reBlankLine.test(line)) return parseValues;
+		if (!line || reBlankLine.test(line)) return parseValues.makePublic();
 		
 		// Trim the line.
 		line = line.replace(reTrim, '');
-		if (line === '') return parseValues;
+		if (line === '') return parseValues.makePublic();
 		
 		// Split it into tokens.
 		var tokens = line.split(reSplitSpaces);
@@ -220,31 +258,7 @@ var TodoTxt = (function(){
 		}
 		
 		// Return functions to keep the todo immutable.
-		var output = {
-			priority: function() { return parseValues.priority; },
-			createdDate: function() { return parseValues.createdDate; },
-			isComplete: function() { return parseValues.isComplete; },
-			completedDate: function() { return parseValues.completedDate; },
-			contexts: function() { return parseValues.contexts; },
-			projects: function() { return parseValues.projects; },
-			addons: function() { return parseValues.addons; },
-			textTokens: function() { return parseValues.textTokens; },
-			render: function() { return line; },
-			completeTask: function() { 
-				if (parseValues.isComplete) return;
-				parseValues.isComplete = true;
-				parseValues.completedDate = new Date();
-				line = 'x ' + toIsoDate(parseValues.completedDate) + ' ' + line;
-			},
-			uncompleteTask: function() {
-				if (!parseValues.isComplete) return;
-				parseValues.isComplete = false;
-				var hadCompletedDate = (parseValues.completedDate !== null);
-				parseValues.completedDate = null;
-				
-				line = line.split(' ').splice(hadCompletedDate ? 2 : 1).join(' ');
-			}
-		};
+		var output = parseValues.makePublic();
 		
 		return output;
 	};
@@ -261,29 +275,6 @@ var TodoTxt = (function(){
 	var isArray = function(arg) {
 		return Object.prototype.toString.call(arg) === '[object Array]'
 	};
-	
-	var renderLine = function(todo) {
-		var output = '';
-		if (todo.isComplete) {
-			output += 'x';
-			if (todo.completedDate) output += ' ' + toIsoDate(todo.completedDate);
-		}
-		if (todo.priority) output += ' (' + todo.priority + ')';
-		if (todo.createdDate) output += ' ' + toIsoDate(todo.createdDate);
-		output += ' ' + todo.textTokens.join(' ');
-		if (todo.projects.length > 0) output += ' ' + todo.projects.join(' ');
-		if (todo.contexts.length > 0) output += ' ' + todo.contexts.join(' ');
-		for (var k in todo.addons) {
-			if (!todo.addons.hasOwnProperty(k)) continue;
-			var val = todo.addons[k];
-			if (!isArray(val)) val = [val];
-			for (var i = 0; i < val.length; i++) {
-				output += ' ' + k + ':' + val[i];
-			}
-		}
-		return output.replace(reTrim, '');
-	};
-	
 	
 	var publicMethods = {
 		parseFile: parseFile,

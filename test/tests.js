@@ -47,6 +47,16 @@ describe('TodoTxt.parseFile', function() {
 		var multi = todos.items({ projects: ['+prj1'], contexts: ['@ctxt1', '@ctxt2']});
 		expect(multi.length).toBe(1)
 	});
+    it("removes items when asked", function() {
+        var testFile = 'item1\nitem2\nitem3';
+        var todos = TodoTxt.parseFile(testFile);
+        var item2 = todos.items()[1];
+        expect(item2.render()).toBe('item2');
+        todos.removeItem(item2);
+        expect(todos.items().length).toBe(2);
+        expect(todos.length).toBe(2);
+        expect(todos.render()).toBe('item1\nitem3');
+    });
 });
 
 describe('TodoTxt.parseLine', function() {

@@ -15,8 +15,10 @@ a specialized object with these properties:
 * `.length` returns the number of items found in the list. Blank lines are ignored.
 * `.items(query)` returns an array of task objects, optionally filtered by a query (see below).
 * `.render()` converts the object back into a todo list. It may not look the same as the original (see below).
+* `.removeItem(item)` removes an item from the list. 
 
 `TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
+
 * `isComplete()` : whether the task has been completed. Boolean, never null.
 * `completedDate()` : The date of completion, if present. Date, may be null.
 * `priority()` : The current priority. Single character between A-Z, may be null.
@@ -51,6 +53,7 @@ console.log(todos.length);            // ==> 4
 // Fetch items from the object
 var items = todos.items();            
 
+console.log(items[0].id());             // ==> (a UUID-like string)
 console.log(items[0].contexts());       // ==> ['@guitar', '@home']
 console.log(items[0].projects());       // ==> ['+music']
 console.log(items[0].priority());       // ==> null
