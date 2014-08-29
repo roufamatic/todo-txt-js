@@ -7,6 +7,8 @@ About
 This is a [todo.txt](https://github.com/ginatrapani/todo.txt-cli/wiki/The-Todo.txt-Format) parser written in pure JavaScript.
 The source has no dependencies, though there are a few for the unit tests.
 
+`bower install todo-txt-js`
+
 Usage
 -----
 `TodoTxt.parseFile(str)` treats a string as though it is a file containing many todo items separated by line breaks. It returns 
