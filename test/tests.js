@@ -61,6 +61,21 @@ describe('TodoTxt.parseFile', function() {
         expect(todos.length).toBe(2);
         expect(todos.render()).toBe('item1\nitem3');
     });
+    it("sorts queried items with an array of sort objects", function() {
+        var first = '(A) 2014-01-02 I am first +1';
+        var second = '(A) 2014-01-01 I am second';
+        var third = '(B) 2014-01-03 I am third';
+        var fourth = 'I am fourth';
+        var testFile = fourth + '\n' + second + '\nx 2014-03-03 (A) 2014-02-02 I am ignored.\n' + first + '\n' + third;
+        var todos = TodoTxt.parseFile(testFile);
+        expect(todos.length).toBe(5);
+        var output = todos.render({ isComplete: false }, ['priority', { field: 'createdDate', direction: TodoTxt.SORT_DESC }]);
+        expect(output).toBe([first, second, third, fourth].join('\n'));
+    });
+    it("throws when an invalid field is used for sorting", function() {
+        var todos = TodoTxt.parseFile('blah');
+        expect(function() { todos.items(null, ['asdfasdfa']); }).toThrow();
+    });
 });
 
 describe('TodoTxt.parseLine', function() {

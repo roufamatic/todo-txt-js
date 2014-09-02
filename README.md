@@ -15,8 +15,8 @@ Usage
 a specialized object with these properties:
 
 * `.length` returns the number of items found in the list. Blank lines are ignored.
-* `.items(query)` returns an array of task objects, optionally filtered by a query (see below).
-* `.render(query)` converts the object back into a todo list, optionally using a query (see below). It may not look the same as the original (see below).
+* `.items(query, sortFields)` returns an array of task objects, optionally filtered by a query and sorted (see below).
+* `.render(query, sortFields)` converts the object back into a todo list, optionally using a query and sorted (see below). 
 * `.removeItem(item)` removes an item from the list. 
 
 `TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
@@ -106,6 +106,25 @@ The todo list `items()` and `render()` methods can be passed a query object to f
 * Functions, for custom comparison logic. The function will take one argument, which is the value of the property on each item. Return `true` if the item passes the custom test, `false` otherwise.
   * Example (with Underscore.js): `{contexts: function(contexts) { return _.contains(contexts, '@home') || _.contains(contexts, '@work'); }}` will match items that have EITHER *@home* OR *@work* contexts.
 
+Sorting
+-------
+The second argument to `items()` and `render()` is an array of `sortFields`. A sortField is either an object that looks like `{field: FIELDNAME, direction: TodoTxt.SORT_DESC | TodoTxt.SORT_ASC}`, or just a string with the fieldName if you are doing an ascending sort.
+
+Currently, you can only sort on the following fields: `isComplete`, `priority`, `completedDate`, `createdDate`.
+
+This example (from the tests) shows off querying and sorting by multiple fields in multiple directions. First, all completed entries are removed by the query. Then the remaining items are sorted by 1) ascending priority, 2) descending creation date.
+
+    it("sorts queried items with an array of sort objects", function() {
+        var first = '(A) 2014-01-02 I am first +1';
+        var second = '(A) 2014-01-01 I am second';
+        var third = '(B) 2014-01-03 I am third';
+        var fourth = 'I am fourth';
+        var testFile = fourth + '\n' + second + '\nx 2014-03-03 (A) 2014-02-02 I am ignored.\n' + first + '\n' + third;
+        var todos = TodoTxt.parseFile(testFile);
+        expect(todos.length).toBe(5);
+        var output = todos.render({ isComplete: false }, ['priority', { field: 'createdDate', direction: TodoTxt.SORT_DESC }]);
+        expect(output).toBe([first, second, third, fourth].join('\n'));
+    });
 
 Rendering
 ---------

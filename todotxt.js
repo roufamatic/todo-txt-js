@@ -1,11 +1,14 @@
-var TodoTxt = (function(){
-	var reTrim = /^\s+|\s+$/g;
+var TodoTxt = (function () {
+    var SORT_ASC = 'asc';
+    var SORT_DESC = 'desc';
+    var reTrim = /^\s+|\s+$/g;
 	var reSplitSpaces = /\s+/;
 	var reFourDigits = /^\d{4}$/;
 	var reTwoDigits = /^\d{2}$/;
 	var rePriority = /^\([A-Z]\)$/;
 	var reBlankLine = /^\s*$/;
 	
+
 	var parseFile = function(blob) {
 		var lines = blob.split('\n');
 		var items = [];
@@ -15,8 +18,8 @@ var TodoTxt = (function(){
 			if (reBlankLine.test(line)) continue;
 			items.push(parseLine(line));
 		}
-		output.render = function(query) {
-		    var itemsToRender = output.items(query);
+		output.render = function(query, sortFields) {
+		    var itemsToRender = output.items(query, sortFields);
 
 		    var txt = '';
 		    for (var i = 0; i < itemsToRender.length; i++) {
@@ -25,18 +28,88 @@ var TodoTxt = (function(){
 			}
 			return txt;
 		};
-		output.items = function(query) {
+		output.items = function(query, sortFields) {
 			// A query is an AND search -- all properties in that object must be found on the item for the item to match.
 			// Query property values may be functions. In this case, the property value for each item will be passed into the function,
 			// and the function should return a boolean indicating if the item matches or not. 
-			
+		    
 			var output = [];
 			if (!query) query = {};
 			for (var i = 0; i < items.length; i++) { 
 				var item = items[i];
 				if (isItemInQuery(item, query)) output.push(item);
 			}
-			
+
+			if (isArray(sortFields)) {
+			    // Validate the sort fields.
+                for (var i = 0; i < sortFields.length; i++) {
+                    var sort = sortFields[i];
+                    if (typeof sort === 'string') {
+                        sortFields[i] = sort = { field: sort, direction: SORT_ASC };
+                    }
+                    if (!sort.field) {
+                        throw new Error('Invalid sort ' + sort);
+                    }
+                    var validFields = ['priority', 'createdDate', 'completedDate', 'isComplete'];
+                    if (validFields.indexOf(sort.field) === -1) {
+                        throw new Error('Cannot sort by this field: ' + sort.field);
+                    }
+                    if (sort.direction !== SORT_DESC) sort.direction = SORT_ASC;
+                }
+
+			    var sortError = null;
+			    var compare = function (a, b, sort) {
+                    var aVal = a[sort.field]();
+                    var bVal = b[sort.field]();
+
+			        var sortResult = (function() {
+			            if (aVal === bVal) return 0;
+
+			            // Reminder: we validated sort.field above, so default can cover all string sorting cases.
+			            switch (sort.field) {
+			            case 'isComplete':
+			                if (sort.direction === SORT_DESC) {
+			                    return aVal ? 1 : -1;
+			                }
+			                return aVal ? -1 : 1;
+			            case 'createdDate':
+			            case 'completedDate':
+			                // put nulls at the bottom regardless of whether we sort ascending or descending.
+			                if (aVal === null) return 1;
+			                if (bVal === null) return -1;
+			                if (sort.direction === SORT_DESC) {
+			                    return aVal < bVal ? 1 : -1;
+			                }
+			                return aVal < bVal ? -1 : 1;
+			            case 'priority':
+			                // nulls go at the end when ascending, and at the beginning when descending.
+			                if (aVal === null) return sort.direction === SORT_DESC ? -1 : 1;
+			                if (bVal === null) return sort.direction === SORT_DESC ? 1 : -1;
+
+			                if (sort.direction === SORT_DESC) {
+			                    return aVal < bVal ? 1 : -1;
+			                }
+			                return aVal < bVal ? -1 : 1;
+			            default:
+			                throw new Error('Unhandled sort.field ' + sort.field);
+			            }
+			        })();
+			        return sortResult;
+			    }
+			    var sorter = function (a, b) {
+			        try {
+			            for (var i = 0; i < sortFields.length; i++) {
+			                var sortResult = compare(a, b, sortFields[i]);
+			                if (sortResult !== 0) return sortResult;
+			            }
+			        } catch (e) {
+			            sortError = e;
+			        }
+			        return 0;
+			    };
+			    output.sort(sorter);
+			    if (sortError) throw new Error(sortError);
+			}
 			return output;
 		};
 		
@@ -170,7 +243,7 @@ var TodoTxt = (function(){
 			
 			var dtStr = bits.join('/'); // Slashes ensure local time is used, per http://blog.dygraphs.com/2012/03/javascript-and-dates-what-mess.html
 			var dt = new Date(dtStr);
-			if (dt === 'Invalid Date') return null;
+			if (dt.toString() === 'Invalid Date') return null;
 			// Now make sure that javascript didn't interpret an invalid date as a date (e.g. 2014-02-30 can be reimagined as 2014-03-02)
 			year = parseInt(year, 10);
 			month = parseInt(month, 10);
@@ -259,7 +332,7 @@ var TodoTxt = (function(){
 			tokenParser(tokens[i]);
 		}
 		
-		// Return functions to keep the todo immutable.
+		// Return functions to keep the item immutable.
 		var output = parseValues.makePublic();
 		
 		return output;
@@ -275,12 +348,14 @@ var TodoTxt = (function(){
 	};
 
 	var isArray = function(arg) {
-		return Object.prototype.toString.call(arg) === '[object Array]'
+	    return Object.prototype.toString.call(arg) === '[object Array]';
 	};
 	
 	var publicMethods = {
-		parseFile: parseFile,
-		parseLine: parseLine
+	    SORT_ASC: SORT_ASC,
+	    SORT_DESC: SORT_DESC,
+	    parseFile: parseFile,
+	    parseLine: parseLine
 	};
 
 	return publicMethods;
