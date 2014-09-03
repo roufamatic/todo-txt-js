@@ -120,6 +120,12 @@ var TodoTxt = (function () {
 	        output.length = items.length;
 	    };
 
+	    output.addItem = function(item) {
+	        if (typeof item === 'string') item = parseLine(item);
+	        if (!item.createdDate()) item.setCreatedDate(new Date());
+	        items.push(item);
+	        output.length = items.length;
+	    };
 		return output;
 	};
 	
@@ -155,7 +161,10 @@ var TodoTxt = (function () {
 						if (!foundIt) return false;
 					}
 					break;
-				case 'direct':
+			    case 'direct':
+			        if (isDate(queryProp) && isDate(itemProp)) {
+			            return isSameCalendarDate(queryProp,itemProp);
+                    }
 					if (queryProp !== itemProp) return false;
 					
 					break;
@@ -206,9 +215,23 @@ var TodoTxt = (function () {
                     parseValues.isComplete = false;
                     var hadCompletedDate = (parseValues.completedDate !== null);
                     parseValues.completedDate = null;
-
-                    line = line.split(' ').splice(hadCompletedDate ? 2 : 1).join(' ');
-                }
+                    var arr = line.split(' ');
+                    arr.splice(0, hadCompletedDate ? 2 : 1);
+                    line = arr.join(' ');
+                },
+                setCreatedDate: function (dt) {
+                    if (!isDate(dt)) dt = new Date();
+                    dt = stripTime(dt);
+                    var targetIndex = 0;
+                    var shouldInsertAtIndex = parseValues.createdDate === null;
+                    console.log(parseValues.createdDate, shouldInsertAtIndex);
+                    if (parseValues.priority) targetIndex++;
+                    if (parseValues.completedDate) targetIndex++;
+                    if (parseValues.isComplete) targetIndex++;
+                    var arr = line.split(' ');
+                    arr.splice(targetIndex, shouldInsertAtIndex ? 0 : 1, toIsoDate(dt));
+                    line = arr.join(' ');
+                },
             };
         };
 
@@ -348,9 +371,23 @@ var TodoTxt = (function () {
 	};
 
 	var isArray = function(arg) {
-	    return Object.prototype.toString.call(arg) === '[object Array]';
+	    return Array.isArray ? Array.isArray(arg) : Object.prototype.toString.call(arg) === '[object Array]';
 	};
-	
+
+    var isDate = function(value) {
+        return (value && typeof value == 'object' && toString.call(value) == '[object Date]') || false;
+    };
+
+    var isSameCalendarDate = function (dt1, dt2) {
+        return dt1.getFullYear() === dt2.getFullYear() &&
+            dt1.getMonth() === dt2.getMonth() &&
+            dt1.getDate() === dt2.getDate();
+    };
+
+    var stripTime = function(dt) {
+        return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    };
+
 	var publicMethods = {
 	    SORT_ASC: SORT_ASC,
 	    SORT_DESC: SORT_DESC,

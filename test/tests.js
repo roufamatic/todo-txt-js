@@ -25,7 +25,7 @@ describe('TodoTxt.parseFile', function() {
 	});
 	it("fetches items using a query", function() {
 		var testFile = '@ctxt1 @ctxt2 text1 +prj1 +prj2\n' + 
-			'(P) @ctxt1 text2\n' + 
+			'(P) 2014-02-02 @ctxt1 text2\n' + 
 			'x @ctxt2 +prj1 text1 text3';
 	
 		var todos = TodoTxt.parseFile(testFile);
@@ -49,7 +49,11 @@ describe('TodoTxt.parseFile', function() {
 		expect(hasPrio.length).toBe(1);
 		
 		var multi = todos.items({ projects: ['+prj1'], contexts: ['@ctxt1', '@ctxt2']});
-		expect(multi.length).toBe(1)
+		expect(multi.length).toBe(1);
+
+	    var testDate = new Date('2/2/2014 15:33'); // Making sure the time is lopped.
+		var dates = todos.items({ createdDate: testDate });
+	    expect(dates.length).toBe(1);
 	});
     it("removes items when asked", function() {
         var testFile = 'item1\nitem2\nitem3';
@@ -60,6 +64,19 @@ describe('TodoTxt.parseFile', function() {
         expect(todos.items().length).toBe(2);
         expect(todos.length).toBe(2);
         expect(todos.render()).toBe('item1\nitem3');
+    });
+    it("adds items when asked", function() {
+        var testFile = 'item1';
+        var todos = TodoTxt.parseFile(testFile);
+        todos.addItem('item2');
+        expect(todos.length).toBe(2);
+        expect(todos.items()[1].render()).toBe(isoDate() + ' item2');
+        var complexItemLine = '(C) 2012-03-03 add this too!';
+        var newItem = TodoTxt.parseLine(complexItemLine);
+        todos.addItem(newItem);
+        expect(todos.length).toBe(3);
+        expect(todos.items()[2].render()).toBe(complexItemLine);
+
     });
     it("sorts queried items with an array of sort objects", function() {
         var first = '(A) 2014-01-02 I am first +1';
@@ -172,17 +189,6 @@ describe('TodoTxt.parseLine', function() {
 		expect(todo.render()).toBe(line);
 	});
 	
-	var isoDate = function(dt) {
-		var zeropad = function(num, len) { 
-			var output = num.toString();
-			while (output.length < len) output = '0' + output;
-			return output;
-		}
-		if (!dt) dt = new Date();
-		return dt.getFullYear() + '-' + zeropad(dt.getMonth() + 1, 2) + '-' + zeropad(dt.getDate(), 2);
-	};
-	
-	
 	var expectIdenticalArrayContents = function(arr1, arr2) {
 		expect(_.isArray(arr1)).toBeTruthy();
 		expect(_.isArray(arr2)).toBeTruthy();
@@ -227,5 +233,16 @@ describe('TodoTxt.parseLine', function() {
 			} 
 		});
 	};
-	
 });
+
+var isoDate = function (dt) {
+    var zeropad = function (num, len) {
+        var output = num.toString();
+        while (output.length < len) output = '0' + output;
+        return output;
+    }
+    if (!dt) dt = new Date();
+    return dt.getFullYear() + '-' + zeropad(dt.getMonth() + 1, 2) + '-' + zeropad(dt.getDate(), 2);
+};
+
+
