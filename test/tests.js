@@ -101,6 +101,31 @@ describe('TodoTxt.parseFile', function() {
         var output = todos.render({ isComplete: false }, ['priority', { field: 'createdDate', direction: TodoTxt.SORT_DESC }]);
         expect(output).toBe([first, second, third, fourth].join('\n'));
     });
+    it("assigns line numbers to items", function() {
+        var testFile = '(C) line 1\n(A) line 2\n(B) line 3';
+        var todos = TodoTxt.parseFile(testFile);
+        var items = todos.items(null, ['priority']);
+        expect(items[0].lineNumber()).toBe(2);
+        expect(items[1].lineNumber()).toBe(3);
+        expect(items[2].lineNumber()).toBe(1);
+    });
+    it("sorts by line number when the comparison returns equal results", function() {
+        var testFile = '(C) line 1\n(A) line 2\n(B) line 3\n(A) line 4\n' + 
+            'line 5\nline 6\nline 7\nline 8';
+        var todos = TodoTxt.parseFile(testFile);
+        var items = todos.items(null, ['priority']);
+        expect(items[0].lineNumber()).toBe(2);
+        expect(items[1].lineNumber()).toBe(4);
+        for (var i = 5; i <= 8; i++) {
+            expect(items[i - 1].lineNumber()).toBe(i);
+        }
+
+        items = todos.items(null, [{ field: 'priority', direction: TodoTxt.SORT_DESC }]);
+        for (var i = 1; i <= 4; i++) {
+            expect(items[i - 1].lineNumber()).toBe(i + 4);
+        }
+    });
+
     it("throws when an invalid field is used for sorting", function() {
         var todos = TodoTxt.parseFile('blah');
         expect(function() { todos.items(null, ['asdfasdfa']); }).toThrow();

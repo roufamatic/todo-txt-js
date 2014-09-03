@@ -7,16 +7,22 @@ var TodoTxt = (function () {
 	var reTwoDigits = /^\d{2}$/;
 	var rePriority = /^\([A-Z]\)$/;
 	var reBlankLine = /^\s*$/;
-	
 
 	var parseFile = function(blob) {
-		var lines = blob.split('\n');
+	    var getLineNumber = function (task) {
+	        for (var j = 0; j < items.length; j++) {
+	            if (items[j].id() === task.id()) return j + 1;
+	        }
+	        return 0;
+	    };
+
+	    var lines = blob.split('\n');
 		var items = [];
 		var output = {};
 		for (var i = 0; i < lines.length; i++) {
 			var line = lines[i];
 			if (reBlankLine.test(line)) continue;
-			items.push(parseLine(line));
+			items.push(parseLineInternal(line, getLineNumber));
 		}
 		output.render = function(query, sortFields) {
 		    var itemsToRender = output.items(query, sortFields);
@@ -104,8 +110,11 @@ var TodoTxt = (function () {
 			            }
 			        } catch (e) {
 			            sortError = e;
+			            return 0;
 			        }
-			        return 0;
+			        // If we're here, it means the two items sorted identically. Do one last check of the item number
+			        return a.lineNumber() < b.lineNumber() ? -1 : 1;
+
 			    };
 			    output.sort(sorter);
 			    if (sortError) throw new Error(sortError);
@@ -135,14 +144,17 @@ var TodoTxt = (function () {
 	    };
 
 	    output.addItem = function(item) {
-	        if (typeof item === 'string') item = parseLine(item);
+	        if (typeof item.render === 'function') item = item.render();
+	        item = parseLineInternal(item, getLineNumber);
 	        if (!item.createdDate()) item.setCreatedDate(new Date());
+
 	        items.push(item);
 	        output.length = items.length;
+	        return item;
 	    };
 		return output;
 	};
-	
+
 	var isItemInQuery = function(item, query) {
 		for (var k in query) {
 			if (!query.hasOwnProperty(k)) continue;
@@ -190,21 +202,21 @@ var TodoTxt = (function () {
 		return true;
 	};
 	
-	var parseLine = function(line) {
+	var parseLineInternal = function (line, lineNumberGetter) {
 	    var parseValues = {
 	        id: 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-	            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+	            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
 	            return v.toString(16);
 	        }),
-			priority: null,
-			createdDate: null,
-			isComplete: false,
-			completedDate: null,
-			contexts: [],
-			projects: [],
-			addons: {},
-			textTokens: []
-		};
+	        priority: null,
+	        createdDate: null,
+	        isComplete: false,
+	        completedDate: null,
+	        contexts: [],
+	        projects: [],
+	        addons: {},
+	        textTokens: [],
+	    };
 		
         parseValues.makePublic = function() {
             return {
@@ -217,6 +229,7 @@ var TodoTxt = (function () {
                 projects: function () { return parseValues.projects; },
                 addons: function () { return parseValues.addons; },
                 textTokens: function () { return parseValues.textTokens; },
+                lineNumber: function () { return lineNumberGetter(this); },
                 render: function () { return line; },
                 completeTask: function () {
                     if (parseValues.isComplete) return;
@@ -244,7 +257,7 @@ var TodoTxt = (function () {
                     var arr = line.split(' ');
                     arr.splice(targetIndex, shouldInsertAtIndex ? 0 : 1, toIsoDate(dt));
                     line = arr.join(' ');
-                },
+                }
             };
         };
 
@@ -405,7 +418,9 @@ var TodoTxt = (function () {
 	    SORT_ASC: SORT_ASC,
 	    SORT_DESC: SORT_DESC,
 	    parseFile: parseFile,
-	    parseLine: parseLine
+	    parseLine: function(line) {
+	        return parseLineInternal(line, 0);
+	    }
 	};
 
 	return publicMethods;
