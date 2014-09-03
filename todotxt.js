@@ -224,7 +224,6 @@ var TodoTxt = (function () {
                     dt = stripTime(dt);
                     var targetIndex = 0;
                     var shouldInsertAtIndex = parseValues.createdDate === null;
-                    console.log(parseValues.createdDate, shouldInsertAtIndex);
                     if (parseValues.priority) targetIndex++;
                     if (parseValues.completedDate) targetIndex++;
                     if (parseValues.isComplete) targetIndex++;
