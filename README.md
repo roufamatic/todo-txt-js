@@ -17,10 +17,12 @@ a specialized object with these properties:
 * `.length` returns the number of items found in the list. Blank lines are ignored.
 * `.items(query, sortFields)` returns an array of task objects, optionally filtered by a query and sorted (see below).
 * `.render(query, sortFields)` converts the object back into a todo list, optionally using a query and sorted (see below). 
-* `.removeItem(item)` removes an item from the list. 
+* `.removeItem(item)` removes an item from the list. `item` is expected to be an existing todo object, but any object that implements the `id()` function will do.
+* `.addItem(item)` adds an item to the list. `item` can be either a valid todo item object or a string; if the latter, it will be parsed. If there is no created date on the item, the created date will be set to today.
 
 `TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
 
+* `id()`: a unique id for the task. 
 * `isComplete()` : whether the task has been completed. Boolean, never null.
 * `completedDate()` : The date of completion, if present. Date, may be null.
 * `priority()` : The current priority. Single character between A-Z, may be null.
@@ -31,6 +33,8 @@ a specialized object with these properties:
 * `textTokens()` : A list of all words in the task that have not been categorized as anything else. Array of string, never null, may be empty (but what's the point of that?).
 * `completeTask()` : marks the task completed and sets the completedDate to now.
 * `uncompleteTask()` : marks the task incomplete and sets the completedDate to null.
+* `setCreatedDate(dt)`: sets the created date to the passed in date. If a date is not passed in, then today's date
+is used.
 * `render()` : Converts the object back into a string. 
 
 
