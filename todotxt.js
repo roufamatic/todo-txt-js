@@ -83,6 +83,7 @@ var TodoTxt = (function () {
 			                // put nulls at the bottom regardless of whether we sort ascending or descending.
 			                if (aVal === null) return 1;
 			                if (bVal === null) return -1;
+			                if (aVal.getTime() === bVal.getTime()) return 0;
 			                if (sort.direction === SORT_DESC) {
 			                    return aVal < bVal ? 1 : -1;
 			                }
