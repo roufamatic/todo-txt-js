@@ -65,6 +65,18 @@ describe('TodoTxt.parseFile', function() {
         expect(todos.length).toBe(2);
         expect(todos.render()).toBe('item1\nitem3');
     });
+    it("properly handles repeated items when removing items", function() {
+        var testFile = 'oy\noy\noy\noy\noy';
+        var todos = TodoTxt.parseFile(testFile);
+        expect(todos.length).toBe(5);
+        todos.removeItem('oy');
+        expect(todos.length).toBe(4);
+        var todo = todos.items()[0];
+        todos.removeItem(todo);
+        expect(todos.length).toBe(3);
+        todos.removeItem('oy', true);
+        expect(todos.length).toBe(0);
+    });
     it("adds items when asked", function() {
         var testFile = 'item1';
         var todos = TodoTxt.parseFile(testFile);
@@ -189,6 +201,8 @@ describe('TodoTxt.parseLine', function() {
 		expect(todo.render()).toBe(line);
 	});
 	
+    it("generates a consistent hash for any given string")
+
 	var expectIdenticalArrayContents = function(arr1, arr2) {
 		expect(_.isArray(arr1)).toBeTruthy();
 		expect(_.isArray(arr2)).toBeTruthy();

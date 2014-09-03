@@ -115,8 +115,22 @@ var TodoTxt = (function () {
 		
 		output.length = items.length;
 
-	    output.removeItem = function(itemToRemove) {
-	        items = _.reject(items, function (item) { return itemToRemove.id() === item.id(); });
+	    output.removeItem = function(itemToRemove, allMatches) {
+	        if (typeof itemToRemove.render === 'function') itemToRemove = itemToRemove.render();
+	        // Copy the array.
+	        var newItems = [];
+	        for (var i = 0; i < items.length; i++) {
+	            newItems[i] = items[i];
+	        }
+	        var spliceIndex = 0;
+            for (var i = 0; i < newItems.length; i++) {
+                if (newItems[i].render() === itemToRemove) {
+                    items.splice(spliceIndex, 1);
+                    if (!allMatches) break;
+                } else {
+                    spliceIndex++;
+                }
+            }
 	        output.length = items.length;
 	    };
 
@@ -289,7 +303,7 @@ var TodoTxt = (function () {
 			
 			if (canBeCompletedDate) {
 				var dt = tokenToDate(token);
-				if (_.isDate(dt)) {
+				if (isDate(dt)) {
 					parseValues.completedDate = dt;
 					canBeCompletedDate = false;
 					return;
@@ -306,7 +320,7 @@ var TodoTxt = (function () {
 			
 			if (canBeCreatedDate) {
 				var dt = tokenToDate(token);
-				if (_.isDate(dt)) {
+				if (isDate(dt)) {
 					parseValues.createdDate = dt;
 					canBeComplete = false;
 					canBeCompletedDate = false;

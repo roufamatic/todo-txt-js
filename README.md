@@ -17,12 +17,13 @@ a specialized object with these properties:
 * `.length` returns the number of items found in the list. Blank lines are ignored.
 * `.items(query, sortFields)` returns an array of task objects, optionally filtered by a query and sorted (see below).
 * `.render(query, sortFields)` converts the object back into a todo list, optionally using a query and sorted (see below). 
-* `.removeItem(item)` removes an item from the list. `item` is expected to be an existing todo object, but any object that implements the `id()` function will do.
+* `.removeItem(item, allMatches)` removes an item from the list. `item` can be either a valid todo item object or a string. 
+Matching is done by pure string matching using `item.render()` below. If `allMatches` is omitted or `false`, only the first matched item will be removed. If `true`, all todo items with the same `render()` value will be removed.
 * `.addItem(item)` adds an item to the list. `item` can be either a valid todo item object or a string; if the latter, it will be parsed. If there is no created date on the item, the created date will be set to today.
 
 `TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
 
-* `id()`: a unique id for the task. 
+* `id()`: a unique, generated id for the task. (This will be different every time the line is parsed, so it may be of limited use.)
 * `isComplete()` : whether the task has been completed. Boolean, never null.
 * `completedDate()` : The date of completion, if present. Date, may be null.
 * `priority()` : The current priority. Single character between A-Z, may be null.
