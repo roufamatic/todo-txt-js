@@ -130,6 +130,14 @@ describe('TodoTxt.parseFile', function() {
         var todos = TodoTxt.parseFile('blah');
         expect(function() { todos.items(null, ['asdfasdfa']); }).toThrow();
     });
+
+    it("fetches collections when asked", function() {
+        var todos = TodoTxt.parseFile("item2 @c2 +p2\nitem3 @c3 +p3\nnothing new @c1 @c2 @c3 +p1 +p2 +p3\nitem1 @c1 +p1\nx @ignore +this");
+        var collections = todos.collections();
+        expect(collections).toEqual({ contexts: ['@c1', '@c2', '@c3'], projects: ['+p1', '+p2', '+p3'] });
+        collections = todos.collections(true);
+        expect(collections).toEqual({ contexts: ['@c1', '@c2', '@c3', '@ignore'], projects: ['+p1', '+p2', '+p3', '+this'] });
+    });
 });
 
 describe('TodoTxt.parseLine', function() {

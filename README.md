@@ -20,6 +20,7 @@ a specialized object with these properties:
 * `.removeItem(item, allMatches)` removes an item from the list. `item` can be either a valid todo item object or a string. 
 Matching is done by pure string matching using `item.render()` below. If `allMatches` is omitted or `false`, only the first matched item will be removed. If `true`, all todo items with the same `render()` value will be removed.
 * `.addItem(item)` adds an item to the list. `item` can be either a valid todo item object or a string; if the latter, it will be parsed. If there is no created date on the item, the created date will be set to today. Returns the added item, which may have a different `id()` value than the one passed in.
+* `.collections(includeCompleted)` returns an object of the form `{ contexts: [/* array of string */], projects: [/* array of string */]}`, where the two arrays contain the unique contexts and projects found in all items respectively, both sorted alphabetically. If `includeCompleted` is false or omitted then only incomplete tasks are considered.
 
 `TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
 

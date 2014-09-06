@@ -153,6 +153,32 @@ var TodoTxt = (function () {
 	        output.length = items.length;
 	        return item;
 	    };
+
+	    output.collections = function(includeCompleted) {
+	        var contextsObj = {}, projectsObj = {}, contexts = [], projects=[], i, j, k;
+            for (i = 0; i < items.length; i++) {
+                if (!includeCompleted && items[i].isComplete()) continue;
+                var itemContexts = items[i].contexts();
+                var itemProjects = items[i].projects();
+
+                for (j = 0; j < itemContexts.length; j++) {
+                    contextsObj[itemContexts[j]] = true;
+                }
+                for (j = 0; j < itemProjects.length; j++) {
+                    projectsObj[itemProjects[j]] = true;
+                }
+            }
+            for (k in contextsObj) {
+                if (contextsObj[k] === true) contexts.push(k);
+            }
+            for (k in projectsObj) {
+                if (projectsObj[k] === true) projects.push(k);
+            }
+            contexts.sort();
+	        projects.sort();
+
+	        return { contexts: contexts, projects: projects };
+	    };
 		return output;
 	};
 
