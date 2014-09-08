@@ -233,8 +233,15 @@ describe('TodoTxt.parseLine', function() {
 		expect(_.isDate(todo.completedDate())).toBeFalsy();
 		expect(todo.render()).toBe(line);
 	});
-	
-    it("generates a consistent hash for any given string")
+
+    it("Can add contexts, projects, and add-ons to an item, and the render makes sense", function() {
+        var line = '+ptp @ptp p:tp testing test';
+        var todo = TodoTxt.parseLine(line);
+        todo.addContext('@ctxt');
+        todo.addProject('+proj');
+        todo.setAddOn('add', 'on');
+        expect(todo.render()).toBe(line + ' @ctxt +proj add:on');
+    });
 
 	var expectIdenticalArrayContents = function(arr1, arr2) {
 		expect(_.isArray(arr1)).toBeTruthy();

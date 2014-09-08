@@ -7,6 +7,7 @@ var TodoTxt = (function () {
 	var reTwoDigits = /^\d{2}$/;
 	var rePriority = /^\([A-Z]\)$/;
 	var reBlankLine = /^\s*$/;
+    var reAddOn = /[^\:]+\:[^\:]/;
 
 	var parseFile = function(blob) {
 	    var getLineNumber = function (task) {
@@ -229,86 +230,180 @@ var TodoTxt = (function () {
 		return true;
 	};
 	
-	var parseLineInternal = function (line, lineNumberGetter) {
-	    var parseValues = {
-	        id: 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-	            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-	            return v.toString(16);
-	        }),
-	        priority: null,
-	        createdDate: null,
-	        isComplete: false,
-	        completedDate: null,
-	        contexts: [],
-	        projects: [],
-	        addons: {},
-	        textTokens: [],
-	    };
-		
-        parseValues.makePublic = function() {
-            return {
-                id: function () { return parseValues.id; },
-                priority: function () { return parseValues.priority; },
-                createdDate: function () { return parseValues.createdDate; },
-                isComplete: function () { return parseValues.isComplete; },
-                completedDate: function () { return parseValues.completedDate; },
-                contexts: function () { return parseValues.contexts; },
-                projects: function () { return parseValues.projects; },
-                addons: function () { return parseValues.addons; },
-                textTokens: function () { return parseValues.textTokens; },
-                lineNumber: function () { return lineNumberGetter(this); },
-                render: function () { return line; },
-                completeTask: function () {
-                    if (parseValues.isComplete) return;
-                    parseValues.isComplete = true;
-                    parseValues.completedDate = new Date();
-                    line = 'x ' + toIsoDate(parseValues.completedDate) + ' ' + line;
-                },
-                uncompleteTask: function () {
-                    if (!parseValues.isComplete) return;
-                    parseValues.isComplete = false;
-                    var hadCompletedDate = (parseValues.completedDate !== null);
-                    parseValues.completedDate = null;
-                    var arr = line.split(' ');
-                    arr.splice(0, hadCompletedDate ? 2 : 1);
-                    line = arr.join(' ');
-                },
-                setCreatedDate: function (dt) {
-                    if (!isDate(dt)) dt = new Date();
-                    dt = stripTime(dt);
-                    var targetIndex = 0;
-                    var shouldInsertAtIndex = parseValues.createdDate === null;
-                    if (parseValues.priority) targetIndex++;
-                    if (parseValues.completedDate) targetIndex++;
-                    if (parseValues.isComplete) targetIndex++;
-                    var arr = line.split(' ');
-                    arr.splice(targetIndex, shouldInsertAtIndex ? 0 : 1, toIsoDate(dt));
-                    line = arr.join(' ');
-                }
-            };
-        };
+	var parseLineInternal = function(line, lineNumberGetter) {
+        // Note: this is slightly different behavior than parseFile.
+        // parseFile removes blank lines before sending them into this function.
+        // However, if parseLine is called directly with blank input, it will return an empty todo item.
+        // In other words, "parseLine()" functions like a line constructor.
 
-		
-		// Note: this is slightly different behavior than parseFile.
-		// parseFile removes blank lines before sending them into this function.
-		// However, if parseLine is called directly with blank input, it will return an empty todo item.
-		// In other words, "parseLine()" functions like a line constructor.
-		
-		if (!line || reBlankLine.test(line)) return parseValues.makePublic();
-		
-		// Trim the line.
-		line = line.replace(reTrim, '');
-		if (line === '') return parseValues.makePublic();
-		
-		// Split it into tokens.
-		var tokens = line.split(reSplitSpaces);
-		
-		// Start our state machine.
-		var canBeComplete = true;
-		var canBeCompletedDate = false;
-		var canBePriority = true;
-		var canBeCreatedDate = true;
-		
+        if (!line || reBlankLine.test(line)) return parseValues.makePublic();
+
+        // Trim the line.
+        line = line.replace(reTrim, '');
+        var tokens = [];
+        if (line !== '') {
+        // Split it into tokens.
+            tokens = line.split(reSplitSpaces);
+        }
+
+        var id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+	        return v.toString(16);
+	    });
+
+	    var output = {};
+	    output.render = function() { return tokens.join(' '); };
+	    output.id = function () { return id; };
+	    output.isComplete = function () { return tokens.length > 0 && tokens[0] === 'x'; };
+	    output.completedDate = function() {
+	        if (!output.isComplete()) return null;
+	        if (tokens.length < 2) return null;
+	        return tokenToDate(tokens[1]);
+	    };
+	    output.priority = function() {
+	        var pos = 0;
+            if (output.isComplete()) {
+                pos++;
+                if (output.completedDate()) {
+                    pos++;
+                }
+            }
+	        if (tokens.length <= pos) return null;
+	        var token = tokens[pos];
+	        if (!rePriority.test(token)) return null;
+	        return token[1];
+	    };
+	    output.createdDate = function() {
+	        var pos = 0;
+	        if (output.isComplete()) pos++;
+	        if (output.completedDate()) pos++;
+	        if (output.priority()) pos++;
+	        if (tokens.length <= pos) return null;
+	        var token = tokens[pos];
+	        return tokenToDate(token);
+	    };
+	    output.contexts = function() {
+	        var seen = {};
+	        for (var i = 0; i < tokens.length; i++) {
+	            var token = tokens[i];
+                if (token.length < 2) continue;
+	            if (token[0] === '@') seen[token] = true;
+	        }
+	        return keys(seen, "boolean");
+	    };
+	    output.projects = function () {
+	        var seen = {};
+	        for (var i = 0; i < tokens.length; i++) {
+	            var token = tokens[i];
+	            if (token.length < 2) continue;
+	            if (token[0] === '+') seen[token] = true;
+	        }
+	        return keys(seen, "boolean");
+	    };
+	    output.addons = function() {
+	        var addons = {};
+            for (var i = 0; i < tokens.length; i++) {
+                var token = tokens[i];
+                if (!reAddOn.test(token)) continue;
+                // It's an add-on!
+                var bits = token.split(':');
+                var tail = bits.splice(1);
+                var key = bits[0];
+                var val = tail.join(':'); // Colons beyond the first are just part of the value.
+                if (!addons[key]) addons[key] = val;
+                else if (!isArray(addons[key])) {
+                    var oldValue = addons[key];
+                    addons[key] = [oldValue, val];
+                }
+                else {
+                    addons[key].push(val);
+                }
+            }
+	        return addons;
+	    };
+	    output.textTokens = function() {
+	        var arr = [];
+	        var startPos = 0;
+	        if (output.isComplete()) startPos++;
+	        if (output.completedDate()) startPos++;
+	        if (output.priority()) startPos++;
+	        if (output.createdDate()) startPos++;
+            for (var i = startPos; i < tokens.length; i++) {
+                var token = tokens[i];
+                if (token[0] === '@' || token[0] === '+' || reAddOn.test(token)) continue;
+                arr.push(token);
+            }
+	        return arr;
+	    };
+	    output.lineNumber = function () { return lineNumberGetter(this); };
+
+	    output.completeTask = function() {
+	        if (output.isComplete()) return;
+	        tokens.splice(0, 0, 'x', toIsoDate());
+	    };
+
+	    output.uncompleteTask = function() {
+	        if (!output.isComplete()) return;
+	        var numToDelete = 1;
+	        if (isDate(output.completedDate())) numToDelete++;
+	        tokens.splice(0, numToDelete);
+	    };
+
+	    output.setCreatedDate = function(dt) {
+	        if (!isDate(dt)) dt = new Date();
+	        dt = stripTime(dt);
+	        var targetIndex = 0;
+	        var shouldInsertAtIndex = output.createdDate() === null;
+	        if (output.priority()) targetIndex++;
+	        if (output.completedDate()) targetIndex++;
+	        if (output.isComplete()) targetIndex++;
+	        tokens.splice(targetIndex, shouldInsertAtIndex ? 0 : 1, toIsoDate(dt));
+	    };
+	    
+	    output.addContext = function(ctxt) {
+	        if (typeof ctxt !== 'string' || /^\s*$/.test(ctxt)) throw new Error('Invalid context: ' + ctxt);
+	        if (ctxt[0] !== '@') ctxt = '@' + ctxt;
+	        var ctxts = output.contexts();
+	        for (var i = 0; i < ctxts.length; i++) {
+	            if (ctxts[i] === ctxt) return;
+	        }
+	        tokens.push(ctxt);
+	    };
+
+	    output.addProject = function(prj) {
+	        if (typeof prj !== 'string' || /^\s*$/.test(prj)) throw new Error('Invalid project: ' + prj);
+	        if (prj[0] !== '+') prj = '+' + prj;
+	        var projects = output.projects();
+	        for (var i = 0; i < projects.length; i++) {
+	            if (projects[i] === prj) return;
+	        }
+	        tokens.push(prj);
+	    };
+
+	    output.setAddOn = function (key, value) {
+	        var i;
+	        if (typeof key !== 'string' || /^\s*$/.test(key) || ['@', '+'].indexOf(key[0]) > -1) {
+	            throw new Error('Invalid addon name: ' + key);
+	        }
+	        if (isDate(value)) value = toIsoDate(value);
+	        else value = value.toString();
+	        var targetIndex = null;
+	        var indicesToRemove = [];
+            for (i = 0; i < tokens.length; i++) {
+                var token = tokens[i];
+                if (token.substr(0, key.length + 1) === key + ':') {
+                    if (targetIndex === null) targetIndex = i;
+                    else indicesToRemove.splice(0, 0, i); // Put larger indices in front.
+                }
+            }
+            for (i = 0; i < indicesToRemove.length; i++) {
+                tokens.splice(indicesToRemove[i], 1);
+            }
+	        var addon = key + ':' + value;
+	        if (targetIndex === null) tokens.push(addon);
+	        else tokens.splice(targetIndex, 1, addon);
+	    };
+
 		var tokenToDate = function(token) {
 			var bits = token.split('-');
 			if (bits.length !== 3) return null;
@@ -331,90 +426,12 @@ var TodoTxt = (function () {
 			return dt;
 		};
 		
-		var tokenParser = function(token) {
-			if (canBeComplete && token === 'x') {
-				parseValues.isComplete = true;
-				// The next token cannot be isComplete.
-				canBeComplete = false;
-				// The next token can be completed date.
-				canBeCompletedDate = true;
-				return;
-			}
-			
-			if (canBeCompletedDate) {
-				var dt = tokenToDate(token);
-				if (isDate(dt)) {
-					parseValues.completedDate = dt;
-					canBeCompletedDate = false;
-					return;
-				}
-			}
-			
-			if (canBePriority && rePriority.test(token)) {
-				parseValues.priority = token[1];
-				canBeComplete = false;
-				canBeCompletedDate = false;
-				canBePriority = false;
-				return;
-			}
-			
-			if (canBeCreatedDate) {
-				var dt = tokenToDate(token);
-				if (isDate(dt)) {
-					parseValues.createdDate = dt;
-					canBeComplete = false;
-					canBeCompletedDate = false;
-					canBePriority = false;
-					canBeCreatedDate = false;
-					return;
-				}
-			}
-			
-			if (token.length > 1 && token[0] === '@') {
-				// It's a context!
-				parseValues.contexts.push(token);
-			}
-			else if (token.length > 1 && token[0] === '+') {
-				// It's a project!
-				parseValues.projects.push(token);
-			}
-			else if (token.length > 2 && token.indexOf(':') > 0 && token.indexOf(':') < (token.length - 1)) {
-				// It's an add-on!
-				var bits = token.split(':');
-				var tail = bits.splice(1);
-				var key = bits[0];
-				var val = tail.join(':'); // Colons beyond the first are just part of the value.
-				if (!parseValues.addons[key]) parseValues.addons[key] = val;
-				else if (!isArray(parseValues.addons[key])) {
-					var oldValue = parseValues.addons[key];
-					parseValues.addons[key] = [oldValue, val];
-				}
-				else {
-					parseValues.addons[key].push(val);
-				}
-			}
-			else {
-				// It's just good old text.
-				parseValues.textTokens.push(token);
-			}
-			
-			canBePriority = false;
-			canBeComplete = false;
-			canBeCompletedDate = false;
-			canBeCreatedDate = false;
-		};
-		
-		for (var i = 0; i < tokens.length; i++) {
-			tokenParser(tokens[i]);
-		}
-		
-		// Return functions to keep the item immutable.
-		var output = parseValues.makePublic();
-		
+
 		return output;
 	};
 	
 	var toIsoDate = function(dt) {
+	    if (!isDate(dt)) dt = new Date();
 		var zeropad = function(num, len) { 
 			var output = num.toString();
 			while (output.length < len) output = '0' + output;
@@ -439,6 +456,16 @@ var TodoTxt = (function () {
 
     var stripTime = function(dt) {
         return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    };
+
+    var keys = function(obj, typeName) {
+        var arr = [];
+        for (var k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                if (!typeName || typeof obj[k] === typeName) arr.push(k);
+            }
+        }
+        return arr;
     };
 
 	var publicMethods = {

@@ -38,6 +38,9 @@ Matching is done by pure string matching using `item.render()` below. If `allMat
 * `uncompleteTask()` : marks the task incomplete and sets the completedDate to null.
 * `setCreatedDate(dt)`: sets the created date to the passed in date. If a date is not passed in, then today's date
 is used.
+* `addContext(ctxt)`: adds a context to the end of the task.
+* `addProject(prj)`: adds a project to the end of the task.
+* `setAddOn(key,value)`: creates an add-on of the form `key:value` in the task. If an add-on already exists with this key, its value is replaced with `value`. If there are multiple add-ons with this key, then the first is replaced and the remainder removed.
 * `render()` : Converts the object back into a string. 
 
 
