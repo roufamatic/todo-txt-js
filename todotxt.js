@@ -380,6 +380,18 @@ var TodoTxt = (function () {
 	        tokens.push(prj);
 	    };
 
+	    output.removeContext = function(ctxt) {
+	        if (typeof ctxt !== 'string' || /^\s*$/.test(ctxt)) throw new Error('Invalid context: ' + ctxt);
+	        if (ctxt[0] !== '@') ctxt = '@' + ctxt;
+	        removeTokens(ctxt);
+	    };
+
+	    output.removeProject = function(prj) {
+	        if (typeof prj !== 'string' || /^\s*$/.test(prj)) throw new Error('Invalid project: ' + prj);
+	        if (prj[0] !== '+') prj = '+' + prj;
+	        removeTokens(prj);
+	    };
+
 	    output.setAddOn = function (key, value) {
 	        var i;
 	        if (typeof key !== 'string' || /^\s*$/.test(key) || ['@', '+'].indexOf(key[0]) > -1) {
@@ -388,20 +400,47 @@ var TodoTxt = (function () {
 	        if (isDate(value)) value = toIsoDate(value);
 	        else value = value.toString();
 	        var targetIndex = null;
-	        var indicesToRemove = [];
-            for (i = 0; i < tokens.length; i++) {
-                var token = tokens[i];
-                if (token.substr(0, key.length + 1) === key + ':') {
-                    if (targetIndex === null) targetIndex = i;
-                    else indicesToRemove.splice(0, 0, i); // Put larger indices in front.
-                }
+	        var indicesToRemove = getMatchingIndices(tokens, function(token) {
+	            return token.substr(0, key.length + 1) === key + ':';
+	        });
+            if (indicesToRemove.length > 0) {
+                targetIndex = indicesToRemove[0];
+                indicesToRemove.splice(0, 1);
             }
+	        indicesToRemove.reverse();
             for (i = 0; i < indicesToRemove.length; i++) {
                 tokens.splice(indicesToRemove[i], 1);
             }
 	        var addon = key + ':' + value;
 	        if (targetIndex === null) tokens.push(addon);
 	        else tokens.splice(targetIndex, 1, addon);
+	    };
+
+	    output.removeAddOn = function(key) {
+	        if (typeof key !== 'string' || /^\s*$/.test(key) || ['@', '+'].indexOf(key[0]) > -1) {
+	            throw new Error('Invalid addon name: ' + key);
+	        }
+	        removeTokens(function(token) { return token.substr(0, key.length + 1) === key + ':'; });
+	    };
+
+	    var getMatchingIndices = function(arr, test) {
+	        if (typeof test !== 'function') {
+	            var compareVal = test.toString();
+	            test = function(token) { return token === compareVal; };
+	        }
+	        var matches = [];
+	        for (var i = 0; i < arr.length; i++) {
+	            if (test(arr[i])) matches.push(i);
+	        }
+	        return matches;
+	    };
+
+	    var removeTokens = function(test) {
+	        var indicesToRemove = getMatchingIndices(tokens, test);
+	        indicesToRemove.reverse();
+	        for (var i = 0; i < indicesToRemove.length; i++) {
+	            tokens.splice(indicesToRemove[i], 1);
+	        }
 	    };
 
 		var tokenToDate = function(token) {

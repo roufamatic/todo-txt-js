@@ -234,13 +234,22 @@ describe('TodoTxt.parseLine', function() {
 		expect(todo.render()).toBe(line);
 	});
 
-    it("Can add contexts, projects, and add-ons to an item, and the render makes sense", function() {
+    it("can add contexts, projects, and add-ons to an item, and the render makes sense", function() {
         var line = '+ptp @ptp p:tp testing test';
         var todo = TodoTxt.parseLine(line);
-        todo.addContext('@ctxt');
-        todo.addProject('+proj');
+        todo.addContext('ctxt');
+        todo.addProject('proj');
         todo.setAddOn('add', 'on');
         expect(todo.render()).toBe(line + ' @ctxt +proj add:on');
+    });
+
+    it("can remove contexts, projects, and add-ons", function() {
+        var line = '(A) +ptp @tpt p:tp yay boo p:pp';
+        var todo = TodoTxt.parseLine(line);
+        todo.removeContext('tpt');
+        todo.removeProject('ptp');
+        todo.removeAddOn('p');
+        expect(todo.render()).toBe('(A) yay boo');
     });
 
 	var expectIdenticalArrayContents = function(arr1, arr2) {

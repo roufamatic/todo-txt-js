@@ -39,8 +39,11 @@ Matching is done by pure string matching using `item.render()` below. If `allMat
 * `setCreatedDate(dt)`: sets the created date to the passed in date. If a date is not passed in, then today's date
 is used.
 * `addContext(ctxt)`: adds a context to the end of the task.
+* `removeContext(ctxt)`: removes all instances of the context from the task
 * `addProject(prj)`: adds a project to the end of the task.
+* `removeProject(prj)`: removes all instances of the project from the task.
 * `setAddOn(key,value)`: creates an add-on of the form `key:value` in the task. If an add-on already exists with this key, its value is replaced with `value`. If there are multiple add-ons with this key, then the first is replaced and the remainder removed.
+* `removeAddOn(key)`: removes all add-ons from the task that start with `key:`
 * `render()` : Converts the object back into a string. 
 
 
