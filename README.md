@@ -14,38 +14,37 @@ Usage
 `TodoTxt.parseFile(str)` treats a string as though it is a file containing many todo items separated by line breaks. It returns 
 a specialized object with these properties:
 
-* `.length` returns the number of items found in the list. Blank lines are ignored.
-* `.items(query, sortFields)` returns an array of task objects, optionally filtered by a query and sorted (see below).
-* `.render(query, sortFields)` converts the object back into a todo list, optionally using a query and sorted (see below). 
-* `.removeItem(item, allMatches)` removes an item from the list. `item` can be either a valid todo item object or a string. 
-Matching is done by pure string matching using `item.render()` below. If `allMatches` is omitted or `false`, only the first matched item will be removed. If `true`, all todo items with the same `render()` value will be removed.
-* `.addItem(item)` adds an item to the list. `item` can be either a valid todo item object or a string; if the latter, it will be parsed. If there is no created date on the item, the created date will be set to today. Returns the added item, which may have a different `id()` value than the one passed in.
-* `.collections(includeCompleted)` returns an object of the form `{ contexts: [/* array of string */], projects: [/* array of string */]}`, where the two arrays contain the unique contexts and projects found in all items respectively, both sorted alphabetically. If `includeCompleted` is false or omitted then only incomplete tasks are considered.
+* `.length`: Returns the number of items found in the list. Blank lines are ignored.
+* `.items(query, sortFields)`: Returns an array of task objects, optionally filtered by a query and sorted (see below).
+* `.render(query, sortFields)`: Converts the object back into a todo list, optionally using a query and sorted (see below). 
+* `.removeItem(item, allMatches)`: Removes an item from the list. `item` can be either a valid todo item object or a string. Matching is done by pure string matching using `item.render()` below. If `allMatches` is omitted or `false`, only the first matched item will be removed. If `true`, all todo items with the same `render()` value will be removed.
+* `.addItem(item)`: Adds an item to the list. `item` can be either a valid todo item object or a string; if the latter, it will be parsed. If there is no created date on the item, the created date will be set to today. Returns the added item, which may have a different `id()` value than the one passed in.
+* `.collections(includeCompleted)`: Returns an object of the form `{ contexts: [/* array of string */], projects: [/* array of string */]}`, where the two arrays contain the unique contexts and projects found in all items respectively, both sorted alphabetically. If `includeCompleted` is false or omitted then only incomplete tasks are considered.
 
 `TodoTxt.parseLine(str)` treats a string as though it is a single task. It returns an object representation of the task with these properties:
 
-* `id()`: a unique, generated id for the task. (This will be different every time the line is parsed, so it may be of limited use.)
-* `lineNumber()`: the line of the file where this task is found, excluding blank lines. Always zero
-* `isComplete()` : whether the task has been completed. Boolean, never null.
-* `completedDate()` : The date of completion, if present. Date, may be null.
-* `priority()` : The current priority. Single character between A-Z, may be null.
-* `createdDate()` : The date the task was created, if present. Date, may be null.
-* `contexts()` : A list of all the contexts (@home, @work, etc) in the task. Array of string, never null, may be empty.
-* `projects()` : A list of all the projects (+health, +jobsearch, etc) in the task. Array of string, never null, may be empty.
-* `addons()` : A list of all addons found within the project. Array of object, never null, may be empty. See "Add-Ons" below.
-* `textTokens()` : A list of all words in the task that have not been categorized as anything else. Array of string, never null, may be empty (but what's the point of that?).
-* `completeTask()` : marks the task completed and sets the completedDate to now.
-* `uncompleteTask()` : marks the task incomplete and sets the completedDate to null.
-* `setCreatedDate(dt)`: sets the created date to the passed in date. If a date is not passed in, then today's date
+* `id()`: A unique, generated id for the task. This will be different every time the line is parsed, so it may be of limited use. It does stay the same if you use `.replaceWith` to change the line's data.
+* `lineNumber()`: The line of the file where this task is found, excluding blank lines. Stays the same regardless of how the items are sorted. When you call `TodoTxt.parseLine()`, this value will be zero.
+* `isComplete()`: Whether the task has been completed. Boolean, never null.
+* `completedDate()`: The date of completion, if present. Date, may be null.
+* `priority()`: The current priority. Single character between A-Z, may be null.
+* `createdDate()`: The date the task was created, if present. Date, may be null.
+* `contexts()`: A list of all the contexts (@home, @work, etc) in the task. Array of string, never null, may be empty.
+* `projects()`: A list of all the projects (+health, +jobsearch, etc) in the task. Array of string, never null, may be empty.
+* `addons()`: A list of all addons found within the project. Array of object, never null, may be empty. See "Add-Ons" below.
+* `textTokens()`: A list of all words in the task that have not been categorized as anything else. Array of string, never null, may be empty (but what's the point of that?).
+* `completeTask()`: Marks the task completed and sets the completedDate to now.
+* `uncompleteTask()`: Marks the task incomplete and sets the completedDate to null.
+* `setCreatedDate(dt)`: Sets the created date to the passed in date. If a date is not passed in, then today's date
 is used.
-* `addContext(ctxt)`: adds a context to the end of the task.
-* `removeContext(ctxt)`: removes all instances of the context from the task
-* `addProject(prj)`: adds a project to the end of the task.
-* `removeProject(prj)`: removes all instances of the project from the task.
-* `setAddOn(key,value)`: creates an add-on of the form `key:value` in the task. If an add-on already exists with this key, its value is replaced with `value`. If there are multiple add-ons with this key, then the first is replaced and the remainder removed.
-* `removeAddOn(key)`: removes all add-ons from the task that start with `key:`
+* `addContext(ctxt)`: Adds a context to the end of the task.
+* `removeContext(ctxt)`: Removes all instances of the context from the task
+* `addProject(prj)`: Adds a project to the end of the task.
+* `removeProject(prj)`: Removes all instances of the project from the task.
+* `setAddOn(key,value)`: Creates an add-on of the form `key:value` in the task. If an add-on already exists with this key, its value is replaced with `value`. If there are multiple add-ons with this key, then the first is replaced and the remainder removed.
+* `removeAddOn(key)`: Removes all add-ons from the task that start with `key:`
+* `replaceWith(str)`: Replaces the data with something that could be totally different while maintaining the same `lineNumber()` and `id()` values.
 * `render()` : Converts the object back into a string. 
-
 
 Parsing
 -------
@@ -68,6 +67,7 @@ console.log(todos.length);            // ==> 4
 // Fetch items from the object
 var items = todos.items();            
 
+console.log(items[0].lineNumber());     // ==> 1
 console.log(items[0].id());             // ==> (a UUID-like string)
 console.log(items[0].contexts());       // ==> ['@guitar', '@home']
 console.log(items[0].projects());       // ==> ['+music']
@@ -78,6 +78,7 @@ console.log(items[0].completedDate());  // ==> null
 console.log(items[0].addons());         // ==> {}
 console.log(items[0].textTokens());     // ==> ['Write', 'a', 'new', 'song']
 
+console.log(items[1].lineNumber());     // ==> 2
 console.log(items[1].contexts());       // ==> ['@bicycle']
 console.log(items[1].projects());       // ==> ['+stayhealthy']
 console.log(items[1].priority());       // ==> B
@@ -86,6 +87,7 @@ console.log(items[1].isComplete());     // ==> false
 console.log(items[1].completedDate());  // ==> null
 console.log(items[1].addons());         // ==> {}
 
+console.log(items[2].lineNumber());     // ==> 3
 console.log(items[2].contexts());       // ==> ['@grocerystore']
 console.log(items[2].projects());       // ==> []
 console.log(items[2].priority());       // ==> null
@@ -94,6 +96,7 @@ console.log(items[2].isComplete());     // ==> true
 console.log(items[2].completedDate());  // ==> Date object (March 2, 2014)
 console.log(items[2].addons());         // ==> {}
 
+console.log(items[3].lineNumber());     // ==> 4
 console.log(items[3].contexts());       // ==> []
 console.log(items[3].projects());       // ==> []
 console.log(items[3].priority());       // ==> 'A'

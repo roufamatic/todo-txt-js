@@ -88,7 +88,16 @@ describe('TodoTxt.parseFile', function() {
         todos.addItem(newItem);
         expect(todos.length).toBe(3);
         expect(todos.items()[2].render()).toBe(complexItemLine);
-
+    });
+    it("replaces items when asked", function() {
+        var testFile = 'line1\nline2\nline3';
+        var todos = TodoTxt.parseFile(testFile);
+        expect(todos.length).toBe(3);
+        var line2 = todos.items()[1];
+        expect(line2.render()).toBe('line2');
+        line2.replaceWith('xxx');
+        expect(line2.render()).toBe('xxx');
+        expect(todos.render()).toBe('line1\nxxx\nline3'); 
     });
     it("sorts queried items with an array of sort objects", function() {
         var first = '(A) 2014-01-02 I am first +1';

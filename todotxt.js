@@ -236,15 +236,17 @@ var TodoTxt = (function () {
         // However, if parseLine is called directly with blank input, it will return an empty todo item.
         // In other words, "parseLine()" functions like a line constructor.
 
-        if (!line || reBlankLine.test(line)) return parseValues.makePublic();
+	    var tokens;
+	    var readLine = function(text) {
+	        line = text.replace(reTrim, '');
+	        tokens = [];
+	        if (line !== '') {
+	            tokens = line.split(reSplitSpaces);
+	        }
+	    };
 
-        // Trim the line.
-        line = line.replace(reTrim, '');
-        var tokens = [];
-        if (line !== '') {
-        // Split it into tokens.
-            tokens = line.split(reSplitSpaces);
-        }
+	    if (!line || reBlankLine.test(line)) return null;
+	    readLine(line);
 
         var id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
 	        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -252,7 +254,11 @@ var TodoTxt = (function () {
 	    });
 
 	    var output = {};
-	    output.render = function() { return tokens.join(' '); };
+	    output.render = function () { return tokens.join(' '); };
+	    output.replaceWith = function(text) {
+	        if (!text || reBlankLine.test(text)) throw new Error('Cannot replace a line with nothing.');
+	        readLine(text);
+	    };
 	    output.id = function () { return id; };
 	    output.isComplete = function () { return tokens.length > 0 && tokens[0] === 'x'; };
 	    output.completedDate = function() {
