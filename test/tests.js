@@ -134,6 +134,18 @@ describe('TodoTxt.parseFile', function() {
             expect(items[i - 1].lineNumber()).toBe(i + 4);
         }
     });
+    it("can sort by line number explicitly", function() {
+        var testFile = '1\n2\n3';
+        var todos = TodoTxt.parseFile(testFile);
+        var items = todos.items(null, ['lineNumber']);
+        expect(items[0].render()).toBe('1');
+        expect(items[1].render()).toBe('2');
+        expect(items[2].render()).toBe('3');
+        items = todos.items(null, [{ field: 'lineNumber', direction: TodoTxt.SORT_DESC }]);
+        expect(items[0].render()).toBe('3');
+        expect(items[1].render()).toBe('2');
+        expect(items[2].render()).toBe('1');
+    });
 
     it("throws when an invalid field is used for sorting", function() {
         var todos = TodoTxt.parseFile('blah');

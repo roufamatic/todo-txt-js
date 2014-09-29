@@ -126,7 +126,7 @@ Sorting
 -------
 The second argument to `items()` and `render()` is an array of `sortFields`. A sortField is either an object that looks like `{field: FIELDNAME, direction: TodoTxt.SORT_DESC | TodoTxt.SORT_ASC}`, or just a string with the fieldName if you are doing an ascending sort.
 
-Currently, you can only sort on the following fields: `isComplete`, `priority`, `completedDate`, `createdDate`.
+Currently, you can only sort on the following fields: `isComplete`, `priority`, `completedDate`, `createdDate`, `lineNumber`. The default sort and tiebreaker is `lineNumber ASCENDING`.
 
 This example (from the tests) shows off querying and sorting by multiple fields in multiple directions. First, all completed entries are removed by the query. Then the remaining items are sorted by 1) ascending priority, 2) descending creation date.
 

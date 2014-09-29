@@ -57,7 +57,7 @@ var TodoTxt = (function () {
                     if (!sort.field) {
                         throw new Error('Invalid sort ' + sort);
                     }
-                    var validFields = ['priority', 'createdDate', 'completedDate', 'isComplete'];
+                    var validFields = ['priority', 'createdDate', 'completedDate', 'isComplete', 'lineNumber'];
                     if (validFields.indexOf(sort.field) === -1) {
                         throw new Error('Cannot sort by this field: ' + sort.field);
                     }
@@ -107,8 +107,20 @@ var TodoTxt = (function () {
 			    var sorter = function (a, b) {
 			        try {
 			            for (var i = 0; i < sortFields.length; i++) {
-			                var sortResult = compare(a, b, sortFields[i]);
-			                if (sortResult !== 0) return sortResult;
+			                if (sortFields[i].field === 'lineNumber') {
+                                var desc = sortFields[i].direction === SORT_DESC;
+                                if (a.lineNumber() === b.lineNumber()) {
+                                    return 0;
+                                }
+                                else if (a.lineNumber() < b.lineNumber()) {
+                                    return desc ? 1 : -1;
+                                } else {
+                                    return desc ? -1 : 1; 
+                                }
+                            } 
+
+                            var sortResult = compare(a, b, sortFields[i]);
+                            if (sortResult !== 0) return sortResult;
 			            }
 			        } catch (e) {
 			            sortError = e;
