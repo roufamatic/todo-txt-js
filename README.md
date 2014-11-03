@@ -9,6 +9,8 @@ The source has no dependencies, though there are a few for the unit tests.
 
 `bower install todo-txt-js`
 
+This was written specifically to support the Google Chrome extension [Pay the Piper](https://chrome.google.com/webstore/detail/pay-the-piper/iiepcdnmdcdplpmckjlaefajphcbelcm?hl=en-US). Using it in your project? Let me know! 
+
 Usage
 -----
 `TodoTxt.parseFile(str)` treats a string as though it is a file containing many todo items separated by line breaks. It returns 
