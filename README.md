@@ -13,7 +13,7 @@ This was written specifically to support the Google Chrome extension [Pay the Pi
 
 Usage
 -----
-`TodoTxt.parseFile(str)` treats a string as though it is a file containing many todo items separated by line breaks. It returns 
+`TodoTxt.parseFile(str)` treats a string as though it is a file containing many todo items separated by line breaks. `TodoTxt.create()` can be used to create an object without any content. Both functions returns
 a specialized object with these properties:
 
 * `.length`: Returns the number of items found in the list. Blank lines are ignored.
