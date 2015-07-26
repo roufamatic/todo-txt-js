@@ -1,4 +1,4 @@
-describe('TodoTxt.parseFile',function(){
+describe('TodoTxt.create',function(){
     it("Create an object without any content", function(){
         var todo = TodoTxt.create();
         expect(todo.length).toBe(0);
