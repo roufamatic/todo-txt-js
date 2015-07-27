@@ -1,3 +1,19 @@
+describe('TodoTxt.create',function(){
+    it("Create an object without any content", function(){
+        var todo = TodoTxt.create();
+        expect(todo.length).toBe(0);
+    });
+    it("Add todo's after init", function(){
+        var todo = TodoTxt.create();
+		var item1 = 'Task1';
+		var item2 = 'Task2';
+		todo.addItem(item1);
+		todo.addItem(item2);
+        
+		expect(todo.length).toBe(2);
+		expect(todo.items().length).toBe(2);
+    });
+});
 describe('TodoTxt.parseFile', function() {
 	it("generates an object from a blob of text", function() {
 		var testFile = 'Task1\nTask2';
