@@ -1,16 +1,15 @@
 
 
 var TodoTxt = (function () {
-  var SORT_ASC = 'asc';
-  var SORT_DESC = 'desc';
-  var reTrim = /^\s+|\s+$/g;
+    var SORT_ASC = 'asc';
+    var SORT_DESC = 'desc';
+    var reTrim = /^\s+|\s+$/g;
 	var reSplitSpaces = /\s+/;
 	var reFourDigits = /^\d{4}$/;
 	var reTwoDigits = /^\d{2}$/;
 	var rePriority = /^\([A-Z]\)$/;
 	var reBlankLine = /^\s*$/;
-  var reAddOn = /[^\:]+\:[^\:]/;
-	
+    var reAddOn = /[^\:]+\:[^\:]/;
 	
 	var create = function(){
 		return parseFile("");
