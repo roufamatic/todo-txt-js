@@ -199,6 +199,71 @@ var TodoTxt = (function () {
 
 	        return { contexts: contexts, projects: projects };
 	    };
+
+	  output.equal = function(blob, overWrite){
+	  	var equal = true;
+			var stop_index = items.length-1;
+			var end_index = stop_index;
+	    var lines = blob.split('\n');
+
+			for (var i = 0; i < lines.length; i++) {
+				var line = lines[i];
+				if (reBlankLine.test(line)) continue;
+				items.push(parseLineInternal(line, end_index++));
+			}
+
+			var equalItem = function(a,b){
+				var result = 0;
+				var cmpItems = ['isComplete', 'priority', 'completedDate', 'createdDate'];
+				var arrayItems = ['contexts','textTokens','projects'];
+
+				for(var i=0; i<cmpItems.length;i++){
+					var aVal = a[cmpItems[i]]();
+					var bVal = b[cmpItems[i]]();
+					if (aVal !== bVal)result |= 1;
+				}
+
+				for(var c=0; c<arrayItems.length;c++){
+					var aVal = a[arrayItems[c]]();
+					var bVal = b[arrayItems[c]]();
+					console.log(aVal);
+
+					result |= aVal.length ^ bVal.length;
+					var min = Math.min(aVal.length,bVal.length);
+					for(var d=0;d<min;d++){
+						if(aVal[d] !== bVal[d]) result |= 1;
+					}
+				}
+
+				return (result == 0);
+			}
+
+			while((stop_index != end_index) && equal){
+				var found = false;
+				var a = items[end_index];
+				for(var i=0; i<=stop_index;i++){
+					var b = items[i];
+					console.log(a.render());
+					console.log(b.render());
+
+					if(equalItem(a,b)){
+						end_index--;
+						found = true;
+						break;
+					}
+				}
+				if(!found)equal = false;
+			}
+
+			// For use case that the new difference is only an exact copy
+			// of already excisting line.
+			if(stop_index != end_index) equal = false;
+
+			// Overwrite current items
+			//			if(!equal && overwrite)
+
+			return equal;
+		};
 		return output;
 	};
 
