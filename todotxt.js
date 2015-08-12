@@ -200,10 +200,10 @@ var TodoTxt = (function () {
 	    };
 
 	  output.equal = function(blob, overWrite){
-	  	var equal = true;
+	  	    var equal = true;
 			var stop_index = items.length-1;
 			var end_index = stop_index;
-	    var lines = blob.split('\n');
+	        var lines = blob.split('\n');
 
 			for (var i = 0; i < lines.length; i++) {
 				var line = lines[i];
@@ -225,7 +225,6 @@ var TodoTxt = (function () {
 				for(var c=0; c<arrayItems.length;c++){
 					var aVal = a[arrayItems[c]]();
 					var bVal = b[arrayItems[c]]();
-					console.log(aVal);
 
 					result |= aVal.length ^ bVal.length;
 					var min = Math.min(aVal.length,bVal.length);
@@ -242,10 +241,9 @@ var TodoTxt = (function () {
 				var a = items[end_index];
 				for(var i=0; i<=stop_index;i++){
 					var b = items[i];
-					console.log(a.render());
-					console.log(b.render());
 
 					if(equalItem(a,b)){
+					    items.splice(end_index,1);
 						end_index--;
 						found = true;
 						break;
@@ -259,7 +257,15 @@ var TodoTxt = (function () {
 			if(stop_index != end_index) equal = false;
 
 			// Overwrite current items
-			//			if(!equal && overwrite)
+			if(!equal && overWrite){
+			    items.length = 0;
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i];
+                    if (reBlankLine.test(line)) continue;
+
+                    items.push(parseLineInternal(line, getLineNumber));
+                }
+            }
 
 			return equal;
 		};
