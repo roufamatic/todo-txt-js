@@ -194,8 +194,11 @@ describe('TodoTxt.parseFile', function() {
     it("compares and verify overwrite todo items", function(){
     	var todos = TodoTxt.parseFile("Item1 @c2 +p3\nitem2 @c1 +p4\nitem3 @c5 +p1");
     	var cmpTodos1 = "item2 +p1 @c5\nitem2 +p2 @c1\nItem1 @c2 +p3\nItem10 +p4 @a1";
+    	var cmpTodos2 = "item2 +p2 @c1\nItem1 @c2 +p3\nItem10 +p4 @a1";
     	expect(todos.equal(cmpTodos1,true)).toBe(false);
     	expect(todos.length).toBe(4);
+    	expect(todos.equal(cmpTodos2,true)).toBe(false);
+    	expect(todos.length).toBe(3);
 		});
 });
 

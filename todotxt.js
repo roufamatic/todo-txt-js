@@ -201,6 +201,7 @@ var TodoTxt = (function () {
 
 	  output.equal = function(blob, overWrite){
 	  	    var equal = true;
+	  	    var size = items.length;
 			var stop_index = items.length-1;
 			var end_index = stop_index;
 	        var lines = blob.split('\n');
@@ -209,7 +210,11 @@ var TodoTxt = (function () {
 				var line = lines[i];
 				if (reBlankLine.test(line)) continue;
 				items.push(parseLineInternal(line, end_index++));
+				size--;
 			}
+
+            // Input blob has not equal todos as current
+			if(size != 0) equal = false;
 
 			var equalItem = function(a,b){
 				var result = 0;
@@ -265,6 +270,7 @@ var TodoTxt = (function () {
 
                     items.push(parseLineInternal(line, getLineNumber));
                 }
+		        output.length = items.length;
             }
 
 			return equal;
