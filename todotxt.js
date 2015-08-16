@@ -1,16 +1,15 @@
 
 
 var TodoTxt = (function () {
-  var SORT_ASC = 'asc';
-  var SORT_DESC = 'desc';
-  var reTrim = /^\s+|\s+$/g;
+    var SORT_ASC = 'asc';
+    var SORT_DESC = 'desc';
+    var reTrim = /^\s+|\s+$/g;
 	var reSplitSpaces = /\s+/;
 	var reFourDigits = /^\d{4}$/;
 	var reTwoDigits = /^\d{2}$/;
 	var rePriority = /^\([A-Z]\)$/;
 	var reBlankLine = /^\s*$/;
-  var reAddOn = /[^\:]+\:[^\:]/;
-	
+    var reAddOn = /[^\:]+\:[^\:]/;
 	
 	var create = function(){
 		return parseFile("");
@@ -199,6 +198,83 @@ var TodoTxt = (function () {
 
 	        return { contexts: contexts, projects: projects };
 	    };
+
+	  output.equal = function(blob, overWrite){
+	  	    var equal = true;
+	  	    var size = items.length;
+			var stop_index = items.length-1;
+			var end_index = stop_index;
+	        var lines = blob.split('\n');
+
+			for (var i = 0; i < lines.length; i++) {
+				var line = lines[i];
+				if (reBlankLine.test(line)) continue;
+				items.push(parseLineInternal(line, end_index++));
+				size--;
+			}
+
+            // Input blob has not equal todos as current
+			if(size != 0) equal = false;
+
+			var equalItem = function(a,b){
+				var result = 0;
+				var cmpItems = ['isComplete', 'priority', 'completedDate', 'createdDate'];
+				var arrayItems = ['contexts','textTokens','projects'];
+
+				for(var i=0; i<cmpItems.length;i++){
+					var aVal = a[cmpItems[i]]();
+					var bVal = b[cmpItems[i]]();
+					if (aVal !== bVal)result |= 1;
+				}
+
+				for(var c=0; c<arrayItems.length;c++){
+					var aVal = a[arrayItems[c]]();
+					var bVal = b[arrayItems[c]]();
+
+					result |= aVal.length ^ bVal.length;
+					var min = Math.min(aVal.length,bVal.length);
+					for(var d=0;d<min;d++){
+						if(aVal[d] !== bVal[d]) result |= 1;
+					}
+				}
+
+				return (result == 0);
+			}
+
+			while((stop_index != end_index) && equal){
+				var found = false;
+				var a = items[end_index];
+				for(var i=0; i<=stop_index;i++){
+					var b = items[i];
+
+					if(equalItem(a,b)){
+					    items.splice(end_index,1);
+						end_index--;
+						found = true;
+						break;
+					}
+				}
+				if(!found)equal = false;
+			}
+
+			// For use case that the new difference is only an exact copy
+			// of already excisting line.
+			if(stop_index != end_index) equal = false;
+
+			// Overwrite current items
+			if(!equal && overWrite){
+			    items.length = 0;
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i];
+                    if (reBlankLine.test(line)) continue;
+
+                    items.push(parseLineInternal(line, getLineNumber));
+                }
+		        output.length = items.length;
+            }
+
+			return equal;
+		};
 		return output;
 	};
 

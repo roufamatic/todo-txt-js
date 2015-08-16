@@ -175,6 +175,31 @@ describe('TodoTxt.parseFile', function() {
         collections = todos.collections(true);
         expect(collections).toEqual({ contexts: ['@c1', '@c2', '@c3', '@ignore'], projects: ['+p1', '+p2', '+p3', '+this'] });
     });
+    it("compares with an equal todo.txt", function(){
+    	var todos = TodoTxt.parseFile("Item1 @c2 +p3\nitem2 @c1 +p4\nitem3 @c5 +p1");
+    	var cmpTodos1 = "item3 @c5 +p1\nitem2 @c1 +p4\nItem1 @c2 +p3";
+    	var cmpTodos2 = "item3 +p1 @c5\nitem2 +p4 @c1\nItem1 @c2 +p3";
+    	expect(todos.equal(cmpTodos1)).toBe(true);
+    	expect(todos.equal(cmpTodos2)).toBe(true);
+    	expect(todos.length).toBe(3);
+		});
+    it("compares with an inequal todo.txt", function(){
+    	var todos = TodoTxt.parseFile("Item1 @c2 +p3\nitem2 @c1 +p4\nitem3 @c5 +p1");
+    	var cmpTodos1 = "item9 @c5 +p1\nitem2 @c7 +p4\nItem1 @c1 +p3";
+    	var cmpTodos2 = "item2 +p1 @c5\nitem2 +p2 @c1\nItem1 @c2 +p3";
+    	expect(todos.equal(cmpTodos1)).toBe(false);
+    	expect(todos.equal(cmpTodos2)).toBe(false);
+    	expect(todos.length).toBe(3);
+		});
+    it("compares and verify overwrite todo items", function(){
+    	var todos = TodoTxt.parseFile("Item1 @c2 +p3\nitem2 @c1 +p4\nitem3 @c5 +p1");
+    	var cmpTodos1 = "item2 +p1 @c5\nitem2 +p2 @c1\nItem1 @c2 +p3\nItem10 +p4 @a1";
+    	var cmpTodos2 = "item2 +p2 @c1\nItem1 @c2 +p3\nItem10 +p4 @a1";
+    	expect(todos.equal(cmpTodos1,true)).toBe(false);
+    	expect(todos.length).toBe(4);
+    	expect(todos.equal(cmpTodos2,true)).toBe(false);
+    	expect(todos.length).toBe(3);
+		});
 });
 
 describe('TodoTxt.parseLine', function() {
